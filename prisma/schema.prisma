@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum IncomeCategory {
+  allowance
+  salary
+  scholarship
+  cashback
+  irregular
+}
+
+enum BudgetStatus {
+  DRAFT
+  CONFIRMED
+  DEFICIT_ALERT
+}
+
+/// 원본 입출금 내역. 금액은 입금+/출금- 정수(원).
+model Transaction {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  occurredAt   DateTime @map("occurred_at")
+  amount       Int
+  rawDesc      String   @map("raw_desc")
+  counterparty String   @map("counterparty")
+
+  incomeEvent IncomeEvent?
+
+  @@map("transactions")
+}
+
+/// 입금 건 하나를 소득원/카테고리로 분류한 결과. transactions와 1:1.
+model IncomeEvent {
+  txId            String         @id @map("tx_id")
+  sourceId        String         @map("source_id")
+  category        IncomeCategory
+  confidence      Float
+  isUserConfirmed Boolean        @map("is_user_confirmed")
+
+  transaction Transaction @relation(fields: [txId], references: [id])
+
+  @@map("income_events")
+}
+
+/// 소득원 하나의 주기·금액분포·생존여부 학습 결과. sourceId = 정규화된 counterparty+category 그룹 키.
+model SourceProfile {
+  sourceId         String         @id @map("source_id")
+  category         IncomeCategory
+  periodDays       Float          @map("period_days")
+  periodConfidence Float          @map("period_confidence")
+  typicalDom       Int?           @map("typical_dom")
+  amountMu         Int            @map("amount_mu")
+  amountSigma      Float          @map("amount_sigma")
+  occurrenceProb   Float          @map("occurrence_prob")
+  lastSeen         DateTime       @map("last_seen")
+  alive            Boolean        @default(true)
+
+  @@map("source_profiles")
+}
+
+/// 월별 예산안. aiAllocations(AI 원안)은 확정 후에도 절대 덮어쓰지 않는다 — 피드백 학습의 기준값.
+model BudgetPlan {
+  id            String       @id @default(cuid())
+  userId        String       @map("user_id")
+  targetMonth   String       @map("target_month")
+  baseIncome    Int          @map("base_income")
+  aiAllocations Json         @map("ai_allocations")
+  allocations   Json
+  saving        Int
+  status        BudgetStatus @default(DRAFT)
+
+  @@map("budget_plans")
+}
+
+/// 사용자별 카테고리 가중치(피드백 학습 대상)와 저축률.
+model UserPreference {
+  id         String @id @default(cuid())
+  userId     String @unique @map("user_id")
+  weights    Json
+  savingRate Float  @default(0.10) @map("saving_rate")
+
+  @@map("user_preferences")
+}
