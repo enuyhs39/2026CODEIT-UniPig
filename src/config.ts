@@ -1,3 +1,6 @@
+/** 인증 없이 쓰는 고정 데모 유저 ID (절대 규칙 7번 — 인증은 안 붙이되 userId 컬럼은 남겨둔다). */
+export const DEMO_USER_ID = "demo-user";
+
 /** 예산 기준선 분위수. 기본은 balanced(P25) — 절대 규칙 4번, 하드코딩 금지. */
 export const BASE_INCOME_QUANTILES = {
   safe: 0.1,

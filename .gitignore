@@ -51,3 +51,6 @@ temp budget file/
 .claude/skills/
 .windsurf/
 skills-lock.json
+
+# generated dummy data
+/scripts/output
