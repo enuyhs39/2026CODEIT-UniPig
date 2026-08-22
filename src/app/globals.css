@@ -1,26 +1,56 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #dceeff;
+  --foreground: #2f4860;
+  --muted-foreground: #5d7592;
+  --card: #ffffff;
+  --card-border: #c6e0f3;
+  --accent: #7da7d9;
+  --accent-soft: #e6f1fb;
+  --gold: #8a6d1d;
+  --gold-soft: #fff7cc;
+  --success: #2e8b67;
+  --danger: #b5524a;
+  --track: #d3e7f7;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-border: var(--card-border);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-track: var(--track);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #16222c;
+    --foreground: #eaf3fb;
+    --muted-foreground: #93acc2;
+    --card: #223244;
+    --card-border: #33475c;
+    --accent: #8fbbe6;
+    --accent-soft: #26394c;
+    --gold: #f0d876;
+    --gold-soft: #3a331a;
+    --success: #5fc79a;
+    --danger: #e08578;
+    --track: #2c3d4f;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
 }

@@ -92,3 +92,22 @@ model UserPreference {
 
   @@map("user_preferences")
 }
+
+enum SavingsGoalStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+/// 저축 목표. 홈 화면 위젯에서 진행률로 표시.
+model SavingsGoal {
+  id            String            @id @default(cuid())
+  userId        String            @map("user_id")
+  title         String
+  targetAmount  Int               @map("target_amount")
+  currentAmount Int               @default(0) @map("current_amount")
+  targetDate    DateTime?         @map("target_date")
+  status        SavingsGoalStatus @default(IN_PROGRESS)
+
+  @@map("savings_goals")
+}
