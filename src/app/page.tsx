@@ -7,6 +7,7 @@ import { DEMO_USER_ID, OVERDUE_ALERT_CATEGORIES } from "@/config";
 import { loadIncomeTransactionsAndRules, loadTerminatedSourceIds } from "@/lib/incomeData";
 import { OverdueAlertCard } from "@/components/OverdueAlertCard";
 import { ForecastChart } from "@/components/ForecastChart";
+import { BudgetPlanner } from "@/components/BudgetPlanner";
 import { formatWon } from "@/lib/format";
 
 const CATEGORY_LABEL: Record<IncomeCategory, string> = {
@@ -113,6 +114,11 @@ export default async function Home() {
                 점선은 P25(기준선)·P50(중앙값), 음영 구간은 P10~P90 범위예요.
               </p>
             </div>
+          </section>
+
+          <section className="flex flex-col gap-3">
+            <h2 className="text-base font-semibold text-navy">예산 · {targetMonth}</h2>
+            <BudgetPlanner targetMonth={targetMonth} />
           </section>
         </div>
       </main>
