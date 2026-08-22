@@ -5,7 +5,8 @@
  * classifyExpense.ts의 averageMonthlySpendByCategory).
  */
 
-import { BUDGET_ROUNDING_UNIT, MIN_SUBSISTENCE, type ExpenseCategory } from "@/config";
+import { BASE_INCOME_QUANTILES, BUDGET_ROUNDING_UNIT, MIN_SUBSISTENCE, type BudgetProfile, type ExpenseCategory } from "@/config";
+import type { Percentiles } from "./forecast";
 
 export type BudgetInput = {
   baseIncome: number;
@@ -37,10 +38,20 @@ function roundToUnit(value: number, unit: number): number {
   return Math.round(value / unit) * unit;
 }
 
+/** SPEC.md 5장 1단계: forecastIncome의 percentile 중 profile(safe/balanced/aggressive)에 대응하는 값을 고른다. */
+export function pickBaseIncome(percentiles: Percentiles, profile: BudgetProfile): number {
+  const q = BASE_INCOME_QUANTILES[profile];
+  if (q === 0.1) return percentiles.p10;
+  if (q === 0.25) return percentiles.p25;
+  return percentiles.p50;
+}
+
 /**
  * 최소 생계선(식비/교통) 미달 카테고리를 끌어올리고, 그 부족분은 생계선 대상이 아닌
- * 카테고리에서 비례 차감한다. 그래도 부족하면(다른 카테고리를 0으로 만들어도 모자라면)
- * 남은 부족분은 저축에서 뗀다 — SPEC.md 5장 7번.
+ * 카테고리에서 비례 차감한다. 그래도 부족하면 저축에서 뗀다 — SPEC.md 5장 7번.
+ * 저축까지 바닥나면(disposable 자체가 최소생계선 총액보다 적은 경우) 존재하지 않는 돈을
+ * 만들어낼 수는 없으므로, 최소생계선으로 끌어올린 카테고리끼리도 비례로 다시 깎아서
+ * "배분 합계 + 저축 = disposable" 보존 법칙을 항상 지킨다.
  */
 function enforceMinSubsistence(
   allocations: Record<ExpenseCategory, number>,
@@ -69,12 +80,26 @@ function enforceMinSubsistence(
     return { allocations: result, saving };
   }
 
-  // 다른 카테고리를 전부 0으로 만들어도 모자란 나머지는 저축에서 차감
-  const remainder = deficit - donorTotal;
   for (const c of donors) {
     result[c] = 0;
   }
-  return { allocations: result, saving: Math.max(0, saving - remainder) };
+  let remainder = deficit - donorTotal;
+
+  const takenFromSaving = Math.min(remainder, saving);
+  saving -= takenFromSaving;
+  remainder -= takenFromSaving;
+
+  if (remainder > 0) {
+    // 저축도 바닥났는데 여전히 모자람 = disposable 총액이 최소생계선 합계보다 작다는 뜻.
+    // 이 경우 최소생계선 자체를 지킬 수 없다 — 있는 돈 안에서 방금 끌어올린 카테고리끼리 비례 축소한다.
+    const floorCategories = (Object.keys(MIN_SUBSISTENCE) as ExpenseCategory[]).filter((c) => result[c] !== undefined);
+    const floorTotal = floorCategories.reduce((sum, c) => sum + result[c], 0);
+    for (const c of floorCategories) {
+      result[c] -= remainder * (result[c] / floorTotal);
+    }
+  }
+
+  return { allocations: result, saving };
 }
 
 /**

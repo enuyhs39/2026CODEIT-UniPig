@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildBudget, type BudgetInput } from "@/core/budget";
+import { buildBudget, pickBaseIncome, type BudgetInput } from "@/core/budget";
+import type { Percentiles } from "@/core/forecast";
 
 function baseInput(overrides: Partial<BudgetInput> = {}): BudgetInput {
   return {
@@ -11,6 +12,20 @@ function baseInput(overrides: Partial<BudgetInput> = {}): BudgetInput {
     ...overrides,
   };
 }
+
+describe("pickBaseIncome", () => {
+  const percentiles: Percentiles = { p10: 100, p25: 200, p50: 300, p90: 900 };
+
+  it("safe 프로필은 p10을 고른다", () => {
+    expect(pickBaseIncome(percentiles, "safe")).toBe(100);
+  });
+  it("balanced 프로필은 p25를 고른다", () => {
+    expect(pickBaseIncome(percentiles, "balanced")).toBe(200);
+  });
+  it("aggressive 프로필은 p50을 고른다", () => {
+    expect(pickBaseIncome(percentiles, "aggressive")).toBe(300);
+  });
+});
 
 describe("buildBudget", () => {
   it("disposable(base - 고정지출) < 0이면 DEFICIT_ALERT와 shortfall을 반환한다", () => {
@@ -92,6 +107,24 @@ describe("buildBudget", () => {
     // 전체 금액 보존: 배분 합계 + 저축 = disposable
     const sum = Object.values(result.allocations).reduce((s, v) => s + v, 0);
     expect(sum + result.saving).toBe(result.disposable);
+  });
+
+  it("저축까지 바닥나도 여전히 모자라면(disposable < 최소생계선 총액) 존재하지 않는 돈을 만들지 않고 최소생계선끼리 비례 축소한다", () => {
+    // disposable=0 → saving=0, spendable=0 → 모든 카테고리 raw=0인데 최소생계선(23만원)을 채울 돈 자체가 없음
+    const result = buildBudget(
+      baseInput({
+        baseIncome: 0,
+        fixedExpenses: 0,
+        categoryHistoricalSpend: { 식비: 10_000, 카페: 10_000, 쇼핑: 10_000, 교통: 10_000, 기타: 10_000 },
+        savingRate: 0.1,
+      }),
+    );
+    expect(result.status).toBe("DRAFT");
+    if (result.status !== "DRAFT") throw new Error("unreachable");
+
+    expect(result.saving).toBe(0);
+    const sum = Object.values(result.allocations).reduce((s, v) => s + v, 0);
+    expect(sum).toBe(0); // 존재하지 않는 돈을 만들어내지 않음 — 배분 합계 + 저축 = disposable(0)
   });
 
   it("1,000원 단위 반올림 오차는 가장 큰 카테고리가 흡수해서 합계를 맞춘다", () => {
