@@ -1,7 +1,9 @@
 /**
- * 가상 대학생 1명의 12개월치(2025-01 ~ 2025-12) 거래내역을 생성한다.
- * `--seed`로 재현 가능하게 만들고, CSV 저장 + Supabase DB 시드를 둘 다 한다.
- * 9월부터 카페 알바 수입이 끊기는 게 이 데이터의 핵심 — T5 생존확률 검증 + 데모 장치.
+ * 가상 대학생 1명의 12개월치 거래내역을 생성한다. "오늘"(실행 시점) 기준 최근 12개월 —
+ * 고정 연도가 아니라 상대적인 창이라, 언제 다시 돌려도(데모 당일 재실행 포함) 항상
+ * "최근 데이터"가 되도록 설계했다. `--seed`로 랜덤값은 재현 가능하게 만들고,
+ * CSV 저장 + Supabase DB 시드를 둘 다 한다.
+ * 창의 마지막 4개월은 카페 알바 수입이 끊기는 게 이 데이터의 핵심 — T5 생존확률 검증 + 데모 장치.
  *
  * 실행: npx tsx scripts/generateDummy.ts --seed 42
  */
@@ -13,7 +15,8 @@ import { mulberry32 } from "@/core/stats";
 import { DEMO_USER_ID, MERCHANT_CATEGORY_MAP, SEASONAL_FACTORS, type ExpenseCategory } from "@/config";
 import { prisma } from "@/lib/prisma";
 
-const YEAR = 2025;
+const WINDOW_MONTHS = 12;
+const CAFE_ACTIVE_COUNT = 8; // 창의 첫 8개월만 활성, 나머지 4개월(가장 최근)은 중단
 
 type TxRow = {
   userId: string;
@@ -42,13 +45,18 @@ function pick<T>(rng: () => number, items: readonly T[]): T {
   return items[randInt(rng, 0, items.length - 1)];
 }
 
-function dateUTC(month: number, day: number): Date {
-  return new Date(Date.UTC(YEAR, month - 1, day));
+/** 창 안의 i번째(0=가장 오래된 달, WINDOW_MONTHS-1=이번 달) 달의 (year, month 1~12). */
+function windowMonth(now: Date, i: number): { year: number; month: number } {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (WINDOW_MONTHS - 1) + i, 1));
+  return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
+}
+
+function dateUTC(year: number, month: number, day: number): Date {
+  return new Date(Date.UTC(year, month - 1, day));
 }
 
 const CAFE_COUNTERPARTY = "카페드림(주)";
 const CAFE_DESC = "카페드림(주) 급여";
-const CAFE_ACTIVE_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8]; // 9월부터 중단
 
 const CASHBACK_SOURCES = [
   { counterparty: "신한카드", desc: "신한카드 캐시백 적립" },
@@ -79,28 +87,30 @@ const EXPENSE_CATEGORIES = (Object.keys(EXPENSE_RANGE_BY_CATEGORY) as ExpenseCat
   range: EXPENSE_RANGE_BY_CATEGORY[name],
 }));
 
-function generateTransactions(rng: () => number): TxRow[] {
+function generateTransactions(rng: () => number, now: Date): TxRow[] {
   const rows: TxRow[] = [];
 
-  for (let month = 1; month <= 12; month++) {
+  for (let i = 0; i < WINDOW_MONTHS; i++) {
+    const { year, month } = windowMonth(now, i);
+
     // 용돈 — 매달 5일±1일, 40만원 고정
     rows.push({
       userId: DEMO_USER_ID,
-      occurredAt: dateUTC(month, 5 + randInt(rng, -1, 1)),
+      occurredAt: dateUTC(year, month, 5 + randInt(rng, -1, 1)),
       amount: 400_000,
       rawDesc: "엄마 용돈",
       counterparty: "엄마",
     });
 
-    // 카페 알바 — 매달 10일±3일, 60~80만원, 계절성 반영, 9월부터 중단
-    if (CAFE_ACTIVE_MONTHS.includes(month)) {
+    // 카페 알바 — 매달 10일±3일, 60~80만원, 계절성 반영, 창의 마지막 4개월은 중단
+    if (i < CAFE_ACTIVE_COUNT) {
       const base = randInt(rng, 600, 800) * 1000;
       const factor =
         SEASONAL_FACTORS.salary.months[month as keyof typeof SEASONAL_FACTORS.salary.months] ??
         SEASONAL_FACTORS.salary.default;
       rows.push({
         userId: DEMO_USER_ID,
-        occurredAt: dateUTC(month, 10 + randInt(rng, -3, 3)),
+        occurredAt: dateUTC(year, month, 10 + randInt(rng, -3, 3)),
         amount: Math.round((base * factor) / 1000) * 1000,
         rawDesc: CAFE_DESC,
         counterparty: CAFE_COUNTERPARTY,
@@ -111,18 +121,18 @@ function generateTransactions(rng: () => number): TxRow[] {
     if (rng() < 0.6) {
       rows.push({
         userId: DEMO_USER_ID,
-        occurredAt: dateUTC(month, randInt(rng, 1, 28)),
+        occurredAt: dateUTC(year, month, randInt(rng, 1, 28)),
         amount: randInt(rng, 25, 35) * 1000,
         rawDesc: "과외비",
         counterparty: "과외",
       });
     }
 
-    // 장학금 — 3월·9월만 100만원
+    // 장학금 — 3월·9월만 100만원 (실제 학기 캘린더에 맞춰 계산된 캘린더월 기준)
     if (month === 3 || month === 9) {
       rows.push({
         userId: DEMO_USER_ID,
-        occurredAt: dateUTC(month, randInt(rng, 1, 28)),
+        occurredAt: dateUTC(year, month, randInt(rng, 1, 28)),
         amount: 1_000_000,
         rawDesc: "국가장학재단 장학금",
         counterparty: "국가장학재단",
@@ -131,11 +141,11 @@ function generateTransactions(rng: () => number): TxRow[] {
 
     // 캐시백 — 월 2~5건, 500~15,000원
     const cashbackCount = randInt(rng, 2, 5);
-    for (let i = 0; i < cashbackCount; i++) {
+    for (let c = 0; c < cashbackCount; c++) {
       const source = pick(rng, CASHBACK_SOURCES);
       rows.push({
         userId: DEMO_USER_ID,
-        occurredAt: dateUTC(month, randInt(rng, 1, 28)),
+        occurredAt: dateUTC(year, month, randInt(rng, 1, 28)),
         amount: randInt(rng, 500, 15_000),
         rawDesc: source.desc,
         counterparty: source.counterparty,
@@ -144,13 +154,13 @@ function generateTransactions(rng: () => number): TxRow[] {
 
     // 지출 — 식비/카페/쇼핑/교통/기타, 월 40~80건
     const expenseCount = randInt(rng, 40, 80);
-    for (let i = 0; i < expenseCount; i++) {
+    for (let e = 0; e < expenseCount; e++) {
       const category = pick(rng, EXPENSE_CATEGORIES);
       const merchant = pick(rng, category.merchants);
       const [min, max] = category.range;
       rows.push({
         userId: DEMO_USER_ID,
-        occurredAt: dateUTC(month, randInt(rng, 1, 28)),
+        occurredAt: dateUTC(year, month, randInt(rng, 1, 28)),
         amount: -randInt(rng, min, max) * 1000,
         rawDesc: `${merchant} 결제`,
         counterparty: merchant,
@@ -181,11 +191,13 @@ function writeCsv(rows: TxRow[]): string {
 }
 
 async function seedDb(rows: TxRow[]): Promise<void> {
+  // 거래를 통째로 갈아엎으므로, 옛 거래 id를 참조하던 분류 확정 기록도 함께 정리한다(FK 제약).
+  await prisma.incomeEvent.deleteMany({ where: { transaction: { userId: DEMO_USER_ID } } });
   await prisma.transaction.deleteMany({ where: { userId: DEMO_USER_ID } });
   await prisma.transaction.createMany({ data: rows });
 }
 
-function printSummary(rows: TxRow[]): void {
+function printSummary(rows: TxRow[], now: Date): void {
   console.log(`\n총 ${rows.length}건 생성\n`);
 
   console.log("앞 10줄:");
@@ -198,17 +210,19 @@ function printSummary(rows: TxRow[]): void {
     })),
   );
 
-  const monthly = Array.from({ length: 12 }, (_, i) => {
-    const month = i + 1;
-    const monthRows = rows.filter((r) => r.occurredAt.getUTCMonth() + 1 === month);
+  const monthly = Array.from({ length: WINDOW_MONTHS }, (_, i) => {
+    const { year, month } = windowMonth(now, i);
+    const monthRows = rows.filter(
+      (r) => r.occurredAt.getUTCFullYear() === year && r.occurredAt.getUTCMonth() + 1 === month,
+    );
     const totalIncome = monthRows.filter((r) => r.amount > 0).reduce((s, r) => s + r.amount, 0);
     const cafeIncome = monthRows
       .filter((r) => r.counterparty === CAFE_COUNTERPARTY)
       .reduce((s, r) => s + r.amount, 0);
-    return { 월: `${month}월`, 전체입금합계: totalIncome, 카페알바수입: cafeIncome };
+    return { 월: `${year}-${String(month).padStart(2, "0")}`, 전체입금합계: totalIncome, 카페알바수입: cafeIncome };
   });
 
-  console.log("\n월별 입금 합계 (9월부터 카페알바수입이 0이 되는지 확인):");
+  console.log(`\n월별 입금 합계 (마지막 ${WINDOW_MONTHS - CAFE_ACTIVE_COUNT}개월은 카페알바수입이 0이 되는지 확인):`);
   console.table(monthly);
 }
 
@@ -217,8 +231,9 @@ async function main() {
   const seed = args.seed ? Number(args.seed) : 42;
   console.log(`시드: ${seed}`);
 
+  const now = new Date();
   const rng = mulberry32(seed);
-  const rows = generateTransactions(rng);
+  const rows = generateTransactions(rng, now);
 
   const csvPath = writeCsv(rows);
   console.log(`CSV 저장: ${csvPath}`);
@@ -226,7 +241,7 @@ async function main() {
   await seedDb(rows);
   console.log(`DB 시드 완료 (userId=${DEMO_USER_ID})`);
 
-  printSummary(rows);
+  printSummary(rows, now);
 
   await prisma.$disconnect();
 }
