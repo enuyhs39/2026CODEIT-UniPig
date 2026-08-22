@@ -17,17 +17,60 @@ export const DEFAULT_BUDGET_PROFILE: BudgetProfile = "balanced";
 /** 피드백 학습 EMA 계수. 사용자 조정을 즉시 반영하지 않고 천천히 수렴시킨다 (절대 규칙 6번). */
 export const FEEDBACK_EMA_ALPHA = 0.25;
 
+/** 피드백 학습 시 ratio(사용자조정/AI원안) 클램프 범위. 한 번의 확정으로 가중치가 폭주하지 않게 한다. */
+export const FEEDBACK_RATIO_CLIP = {
+  min: 0.5,
+  max: 2.0,
+} as const;
+
+/** 월말 집행률 보정 파라미터. execution = 실제지출/예산. 기준 미만이면 "말로만 늘려달라 한 것"으로 보고 가중치를 낮춘다. */
+export const EXECUTION_CORRECTION = {
+  threshold: 0.7,
+  factor: 0.9,
+} as const;
+
 /** 몬테카를로 시뮬레이션 횟수. */
 export const MONTE_CARLO_SIMULATIONS = 10_000;
 
 /** 예측 히스토그램 bin 개수. 화면에서 재계산하지 않도록 core에서 미리 구간을 나눠 반환한다. */
 export const HISTOGRAM_BINS = 20;
 
+/** 예산 배분에 쓰는 지출 카테고리. */
+export type ExpenseCategory = "식비" | "카페" | "쇼핑" | "교통" | "기타";
+
 /** 카테고리별 최소 생계선(원). 예산 배분이 이 아래로 내려가지 않도록 보장한다. */
-export const MIN_SUBSISTENCE = {
+export const MIN_SUBSISTENCE: Partial<Record<ExpenseCategory, number>> = {
   식비: 200_000,
   교통: 30_000,
 } as const;
+
+/**
+ * 가맹점명 → 지출 카테고리. classifyExpense.ts(예산 카테고리별 과거평균지출 집계)와
+ * generateDummy.ts(더미 지출 생성)가 공유하는 단일 소스 — 두 곳에 따로 유지하면 어긋난다.
+ */
+export const MERCHANT_CATEGORY_MAP: Record<string, ExpenseCategory> = {
+  김밥천국: "식비",
+  교촌치킨: "식비",
+  맘스터치: "식비",
+  한솥도시락: "식비",
+  스타벅스: "카페",
+  이디야커피: "카페",
+  메가커피: "카페",
+  컴포즈커피: "카페",
+  올리브영: "쇼핑",
+  무신사: "쇼핑",
+  쿠팡: "쇼핑",
+  다이소: "쇼핑",
+  서울교통공사: "교통",
+  카카오T: "교통",
+  티머니: "교통",
+  GS25: "기타",
+  CU편의점: "기타",
+  약국: "기타",
+} as const;
+
+/** MERCHANT_CATEGORY_MAP에 없는 가맹점의 fallback 카테고리. */
+export const FALLBACK_EXPENSE_CATEGORY: ExpenseCategory = "기타";
 
 /** 예산 배분 금액 반올림 단위(원). 오차는 가장 큰 카테고리가 흡수한다. */
 export const BUDGET_ROUNDING_UNIT = 1_000;
