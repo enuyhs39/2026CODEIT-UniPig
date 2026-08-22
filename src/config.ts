@@ -20,6 +20,9 @@ export const FEEDBACK_EMA_ALPHA = 0.25;
 /** 몬테카를로 시뮬레이션 횟수. */
 export const MONTE_CARLO_SIMULATIONS = 10_000;
 
+/** 예측 히스토그램 bin 개수. 화면에서 재계산하지 않도록 core에서 미리 구간을 나눠 반환한다. */
+export const HISTOGRAM_BINS = 20;
+
 /** 카테고리별 최소 생계선(원). 예산 배분이 이 아래로 내려가지 않도록 보장한다. */
 export const MIN_SUBSISTENCE = {
   식비: 200_000,
