@@ -8,21 +8,12 @@ import "dotenv/config";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBacktest, type BacktestMonthResult } from "@/core/backtest";
+import { lastNMonthKeys } from "@/core/dateUtils";
 import { DEMO_USER_ID } from "@/config";
 import { prisma } from "@/lib/prisma";
 
 const BACKTEST_SEED = 42;
 const HOLDOUT_MONTH_COUNT = 3;
-
-/** 데이터셋의 마지막 거래일을 기준으로 최근 n개월의 "YYYY-MM" 키를 오래된 순으로 만든다. */
-function lastNMonthKeys(lastDate: Date, n: number): string[] {
-  const year = lastDate.getUTCFullYear();
-  const month = lastDate.getUTCMonth();
-  return Array.from({ length: n }, (_, i) => {
-    const d = new Date(Date.UTC(year, month - (n - 1 - i), 1));
-    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-  });
-}
 
 function fmtWon(n: number): string {
   return `${Math.round(n).toLocaleString()}원`;

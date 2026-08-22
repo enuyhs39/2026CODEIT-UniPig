@@ -45,6 +45,19 @@ export function percentile(values: number[], p: number): number {
   return sorted[lo] + (sorted[hi] - sorted[lo]) * frac;
 }
 
+/**
+ * 문자열을 32비트 정수 시드로 해싱한다(FNV-1a). `userId:targetMonth` 같은 키를 시드로 바꿔
+ * Route Handler가 매번 Math.random 없이도, 같은 달은 항상 같은 예측을, 다른 달은 다른 예측을 만들게 한다.
+ */
+export function hashSeed(input: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
 /** 분위수 예측 채점(Pinball Loss). tau는 예측한 분위수(예: P25 → 0.25). */
 export function pinballLoss(tau: number, actual: number, predicted: number): number {
   const diff = actual - predicted;

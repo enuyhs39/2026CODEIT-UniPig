@@ -9,17 +9,19 @@
  */
 
 import "dotenv/config";
-import { classifyIncomeTransactions, type IncomeTransaction } from "@/core/classify";
-import { profileSource, type IncomeOccurrence } from "@/core/profiling";
-import { forecastIncome, type ForecastSourceInput, type Percentiles } from "@/core/forecast";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { buildProfiledSources } from "@/core/sourcePipeline";
+import { forecastIncome, type ForecastSourceInput } from "@/core/forecast";
 import { averageMonthlySpendByCategory } from "@/core/classifyExpense";
-import { buildBudget } from "@/core/budget";
+import { buildBudget, pickBaseIncome } from "@/core/budget";
 import { updateWeightsFromConfirmation } from "@/core/feedback";
+import { nextMonthKey, toMonthKey } from "@/core/dateUtils";
 import {
-  BASE_INCOME_QUANTILES,
   DEFAULT_BUDGET_PROFILE,
   DEFAULT_SAVING_RATE,
   DEMO_USER_ID,
+  FEEDBACK_EMA_ALPHA,
   type ExpenseCategory,
 } from "@/config";
 import { prisma } from "@/lib/prisma";
@@ -37,19 +39,33 @@ function fmtWon(n: number): string {
   return `${Math.round(n).toLocaleString()}원`;
 }
 
-/** "YYYY-MM" 문자열에서 다음 달 키를 만든다. */
-function nextMonthKey(monthKey: string): string {
-  const [year, month] = monthKey.split("-").map(Number);
-  const d = new Date(Date.UTC(year, month, 1)); // month(0-indexed)+1 = 다음달 1일
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-}
+/**
+ * docs/backtest.md의 "조정률 추이" 행부터 파일 끝까지를 이 실행 결과로 통째로 교체한다.
+ * backtestDemo.ts가 매번 그 파일을 자기 템플릿으로 통째로 덮어써서 "T8 완료 후 추가 예정" placeholder로
+ * 되돌려버리기 때문에, 매번 다시 패치할 수 있게 멱등적으로(치환 방식이 아니라 잘라붙이기로) 짜둔다.
+ */
+function updateBacktestDocsWithAdjustmentTrend(gaps: number[]): void {
+  const docsPath = join(process.cwd(), "docs", "backtest.md");
+  let content: string;
+  try {
+    content = readFileSync(docsPath, "utf-8");
+  } catch {
+    return; // backtestDemo.ts를 먼저 실행하지 않아 파일이 없으면 조용히 스킵
+  }
 
-/** BASE_INCOME_QUANTILES[DEFAULT_BUDGET_PROFILE]에 대응하는 percentile 값을 고른다. */
-function pickBaseIncome(percentiles: Percentiles): number {
-  const q = BASE_INCOME_QUANTILES[DEFAULT_BUDGET_PROFILE];
-  if (q === 0.1) return percentiles.p10;
-  if (q === 0.25) return percentiles.p25;
-  return percentiles.p50;
+  const marker = "| 조정률 추이 |";
+  const markerIndex = content.indexOf(marker);
+  if (markerIndex === -1) return;
+
+  const trend = gaps.map(fmtWon).join(" → ");
+  const replacement =
+    `| 조정률 추이 | ${trend} (매달 "카페" 확정 시 목표와의 격차, ${gaps.length}회 시뮬레이션) | 감소 |\n\n` +
+    `**조정률 추이 상세**: 사용자가 매달 "카페" 배분을 15만원으로 고쳐 확정한다고 가정하고 ${gaps.length}회 반복한 결과, ` +
+    `AI 원안의 카페 배분이 목표치에 점점 가까워졌다(EMA α=${FEEDBACK_EMA_ALPHA}로 천천히 수렴). ` +
+    `사용자가 매번 고쳐야 하는 격차가 ${trend}으로 회차마다 줄어드는 것으로 "조정률이 감소하는지"를 확인했다.\n\n` +
+    "실행: `npx tsx scripts/backtestDemo.ts`(수입 예측 검증), `npx tsx scripts/budgetDemo.ts`(예산+피드백 학습 검증)\n";
+
+  writeFileSync(docsPath, content.slice(0, markerIndex) + replacement, "utf-8");
 }
 
 async function main() {
@@ -59,52 +75,24 @@ async function main() {
   });
 
   const lastTxDate = transactions[transactions.length - 1].occurredAt;
-  const monthKeys = new Set(
-    transactions.map((tx) => `${tx.occurredAt.getUTCFullYear()}-${String(tx.occurredAt.getUTCMonth() + 1).padStart(2, "0")}`),
-  );
+  const monthKeys = new Set(transactions.map((tx) => toMonthKey(tx.occurredAt)));
   const targetMonth = nextMonthKey([...monthKeys].sort().at(-1)!);
 
-  // 1) 수입 기준선(T4→T5→T6)
-  const incomeTx: IncomeTransaction[] = transactions.map((tx) => ({
-    id: tx.id,
-    occurredAt: tx.occurredAt,
-    amount: tx.amount,
-    rawDesc: tx.rawDesc,
-    counterparty: tx.counterparty,
+  // 1) 수입 기준선(T4→T5→T6, T9의 sourcePipeline.ts로 조립)
+  const sources = buildProfiledSources(transactions, [], lastTxDate);
+  const forecastSources: ForecastSourceInput[] = sources.map((s) => ({
+    category: s.category,
+    occurrenceProb: s.profile.occurrenceProb,
+    survivalProb: s.profile.survivalProb,
+    amountMu: s.profile.amountMu,
+    amountSigma: s.profile.amountSigma,
   }));
-  const { events } = classifyIncomeTransactions(incomeTx);
-
-  const amountByTxId = new Map(incomeTx.map((tx) => [tx.id, tx.amount]));
-  const occurredAtByTxId = new Map(incomeTx.map((tx) => [tx.id, tx.occurredAt]));
-  const occurrencesBySource = new Map<string, IncomeOccurrence[]>();
-  for (const e of events) {
-    const list = occurrencesBySource.get(e.sourceId) ?? [];
-    list.push({ occurredAt: occurredAtByTxId.get(e.txId)!, amount: amountByTxId.get(e.txId)! });
-    occurrencesBySource.set(e.sourceId, list);
-  }
-
-  const forecastSources: ForecastSourceInput[] = [];
-  for (const [sourceId, occurrences] of occurrencesBySource) {
-    const profile = profileSource(occurrences, lastTxDate);
-    if (!profile.profilable) continue;
-    const category = events.find((e) => e.sourceId === sourceId)!.category;
-    forecastSources.push({
-      category,
-      occurrenceProb: profile.occurrenceProb,
-      survivalProb: profile.survivalProb,
-      amountMu: profile.amountMu,
-      amountSigma: profile.amountSigma,
-    });
-  }
 
   const { percentiles } = forecastIncome(forecastSources, targetMonth, FORECAST_SEED);
-  const baseIncome = pickBaseIncome(percentiles);
+  const baseIncome = pickBaseIncome(percentiles, DEFAULT_BUDGET_PROFILE);
 
   // 2) 카테고리별 과거평균지출(T8 classifyExpense.ts) — 12개월 데이터 전체 평균
-  const categoryHistoricalSpend = averageMonthlySpendByCategory(
-    transactions.map((tx) => ({ id: tx.id, occurredAt: tx.occurredAt, amount: tx.amount, rawDesc: tx.rawDesc, counterparty: tx.counterparty })),
-    monthKeys.size,
-  );
+  const categoryHistoricalSpend = averageMonthlySpendByCategory(transactions, monthKeys.size);
 
   console.log(`대상월: ${targetMonth} (프로필: ${DEFAULT_BUDGET_PROFILE}, 기준선 ${fmtWon(baseIncome)})`);
   console.log(`고정지출: ${fmtWon(FIXED_EXPENSES)} (스키마에 모델 없음 — 데모에서는 0으로 고정, T9/T10에서 사용자 입력 예정)`);
@@ -169,7 +157,8 @@ async function main() {
   console.log(
     `\n격차(목표-AI) 추이: ${gaps.map(fmtWon).join(" → ")} — ${isMonotonicallyShrinking ? "회차마다 감소함 ✅" : "감소하지 않음 ⚠️"}`,
   );
-  console.log("(= '조정률 추이': 사용자가 고쳐야 하는 폭이 회차마다 줄어드는 것으로 확인 — docs/backtest.md 갱신용)");
+  updateBacktestDocsWithAdjustmentTrend(gaps);
+  console.log("docs/backtest.md의 '조정률 추이' 갱신 완료");
 
   await prisma.$disconnect();
 }

@@ -1,5 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { boxMuller, lognormal, mulberry32, percentile, pinballLoss } from "@/core/stats";
+import { boxMuller, hashSeed, lognormal, mulberry32, percentile, pinballLoss } from "@/core/stats";
+
+describe("hashSeed", () => {
+  it("같은 문자열은 같은 시드를 만든다", () => {
+    expect(hashSeed("demo-user:2026-01")).toBe(hashSeed("demo-user:2026-01"));
+  });
+
+  it("다른 문자열은 다른 시드를 만든다", () => {
+    expect(hashSeed("demo-user:2026-01")).not.toBe(hashSeed("demo-user:2026-02"));
+  });
+
+  it("음수가 아닌 32비트 정수를 반환한다", () => {
+    const seed = hashSeed("demo-user:2026-01");
+    expect(Number.isInteger(seed)).toBe(true);
+    expect(seed).toBeGreaterThanOrEqual(0);
+    expect(seed).toBeLessThanOrEqual(0xffffffff);
+  });
+});
 
 describe("mulberry32", () => {
   it("같은 시드는 같은 수열을 만든다", () => {
