@@ -55,4 +55,21 @@ describe("buildProfiledSources", () => {
     const sourceIds = result.map((r) => r.sourceId).sort();
     expect(sourceIds).toEqual(["국가장학재단:scholarship", "엄마:allowance"]);
   });
+
+  it("terminatedSourceIds에 포함된 소득원은 재계산 없이 alive:false로 강제 처리한다", () => {
+    const result = buildProfiledSources(
+      [
+        tx({ id: "t1", rawDesc: "엄마 용돈", counterparty: "엄마", occurredAt: new Date("2025-01-05"), amount: 400_000 }),
+        tx({ id: "t2", rawDesc: "엄마 용돈", counterparty: "엄마", occurredAt: new Date("2025-02-05"), amount: 400_000 }),
+        tx({ id: "t3", rawDesc: "엄마 용돈", counterparty: "엄마", occurredAt: new Date("2025-03-05"), amount: 400_000 }),
+      ],
+      [],
+      new Date("2025-03-10"), // periodDays 대비 elapsed가 짧아 원래는 alive:true여야 함
+      new Set(["엄마:allowance"]),
+    );
+
+    expect(result[0].profile.alive).toBe(false);
+    expect(result[0].profile.survivalProb).toBe(0);
+    expect(result[0].profile.isOverdue).toBe(false);
+  });
 });

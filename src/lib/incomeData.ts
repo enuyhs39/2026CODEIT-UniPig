@@ -29,3 +29,18 @@ export async function loadIncomeTransactionsAndRules(): Promise<{
 
   return { transactions, userRules };
 }
+
+/** 사용자가 "종료 확정"한 소득원 ID 목록 — sourcePipeline.ts의 buildProfiledSources에 그대로 넘긴다. */
+export async function loadTerminatedSourceIds(): Promise<Set<string>> {
+  const rows = await prisma.sourceTermination.findMany({ where: { userId: DEMO_USER_ID } });
+  return new Set(rows.map((r) => r.sourceId));
+}
+
+/** 소득원 하나를 "종료 확정"으로 기록한다. 이미 확정된 소득원이면 그대로 둔다(confirmedAt 갱신 안 함). */
+export async function terminateSource(sourceId: string): Promise<void> {
+  await prisma.sourceTermination.upsert({
+    where: { sourceId },
+    update: {},
+    create: { sourceId, userId: DEMO_USER_ID },
+  });
+}

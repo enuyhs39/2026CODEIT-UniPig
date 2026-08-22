@@ -92,3 +92,13 @@ model UserPreference {
 
   @@map("user_preferences")
 }
+
+/// 사용자가 "종료 확정"한 소득원. 계산으로는 알 수 없는 사용자의 판단이라 저장이 필요하다.
+/// sourceId = sourcePipeline.ts의 정규화된 소득원 키(정규화counterparty:category).
+model SourceTermination {
+  sourceId    String   @id @map("source_id")
+  userId      String   @map("user_id")
+  confirmedAt DateTime @default(now()) @map("confirmed_at")
+
+  @@map("source_terminations")
+}

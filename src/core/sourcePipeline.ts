@@ -17,6 +17,7 @@ export function buildProfiledSources(
   transactions: IncomeTransaction[],
   userRules: UserRule[],
   today: Date,
+  terminatedSourceIds: Set<string> = new Set(),
 ): ProfiledSource[] {
   const { events } = classifyIncomeTransactions(transactions, userRules);
 
@@ -35,7 +36,12 @@ export function buildProfiledSources(
     const profile = profileSource(occurrences, today);
     if (!profile.profilable) continue;
     const { profilable: _profilable, ...rest } = profile;
-    result.push({ sourceId, category, profile: rest });
+    // 사용자가 "종료 확정"한 소득원은 재계산 없이 확정 상태로 덮어쓴다 — 그래도 elapsedDays/lastSeen 등
+    // 나머지 통계는 그대로 남겨서 카드에 "언제까지 들어왔는지"는 계속 보여줄 수 있게 한다.
+    const resolved = terminatedSourceIds.has(sourceId)
+      ? { ...rest, alive: false, survivalProb: 0, isOverdue: false }
+      : rest;
+    result.push({ sourceId, category, profile: resolved });
   }
   return result;
 }

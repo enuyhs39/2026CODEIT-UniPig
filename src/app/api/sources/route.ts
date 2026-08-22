@@ -7,11 +7,14 @@
 import { NextResponse } from "next/server";
 import { buildProfiledSources } from "@/core/sourcePipeline";
 import { OVERDUE_ALERT_CATEGORIES } from "@/config";
-import { loadIncomeTransactionsAndRules } from "@/lib/incomeData";
+import { loadIncomeTransactionsAndRules, loadTerminatedSourceIds } from "@/lib/incomeData";
 
 export async function GET() {
-  const { transactions, userRules } = await loadIncomeTransactionsAndRules();
-  const sources = buildProfiledSources(transactions, userRules, new Date());
+  const [{ transactions, userRules }, terminatedSourceIds] = await Promise.all([
+    loadIncomeTransactionsAndRules(),
+    loadTerminatedSourceIds(),
+  ]);
+  const sources = buildProfiledSources(transactions, userRules, new Date(), terminatedSourceIds);
 
   const result = sources.map((s) => ({
     ...s,
