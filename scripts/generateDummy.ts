@@ -10,7 +10,7 @@ import "dotenv/config";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { mulberry32 } from "@/core/stats";
-import { DEMO_USER_ID, SEASONAL_FACTORS } from "@/config";
+import { DEMO_USER_ID, MERCHANT_CATEGORY_MAP, SEASONAL_FACTORS, type ExpenseCategory } from "@/config";
 import { prisma } from "@/lib/prisma";
 
 const YEAR = 2025;
@@ -56,13 +56,28 @@ const CASHBACK_SOURCES = [
   { counterparty: "현대카드", desc: "현대카드 포인트 환급" },
 ] as const;
 
-const EXPENSE_CATEGORIES = [
-  { name: "식비", merchants: ["김밥천국", "교촌치킨", "맘스터치", "한솥도시락"], range: [5, 15] as const },
-  { name: "카페", merchants: ["스타벅스", "이디야커피", "메가커피", "컴포즈커피"], range: [3, 8] as const },
-  { name: "쇼핑", merchants: ["올리브영", "무신사", "쿠팡", "다이소"], range: [10, 100] as const },
-  { name: "교통", merchants: ["서울교통공사", "카카오T", "티머니"], range: [1, 3] as const },
-  { name: "기타", merchants: ["GS25", "CU편의점", "약국"], range: [1, 50] as const },
-] as const;
+// 가맹점 목록은 config.ts의 MERCHANT_CATEGORY_MAP이 단일 소스 — classifyExpense.ts(T8)와 공유.
+const EXPENSE_RANGE_BY_CATEGORY: Record<ExpenseCategory, readonly [number, number]> = {
+  식비: [5, 15],
+  카페: [3, 8],
+  쇼핑: [10, 100],
+  교통: [1, 3],
+  기타: [1, 50],
+};
+
+const MERCHANTS_BY_CATEGORY = Object.entries(MERCHANT_CATEGORY_MAP).reduce(
+  (acc, [merchant, category]) => {
+    (acc[category] ??= []).push(merchant);
+    return acc;
+  },
+  {} as Record<ExpenseCategory, string[]>,
+);
+
+const EXPENSE_CATEGORIES = (Object.keys(EXPENSE_RANGE_BY_CATEGORY) as ExpenseCategory[]).map((name) => ({
+  name,
+  merchants: MERCHANTS_BY_CATEGORY[name],
+  range: EXPENSE_RANGE_BY_CATEGORY[name],
+}));
 
 function generateTransactions(rng: () => number): TxRow[] {
   const rows: TxRow[] = [];
