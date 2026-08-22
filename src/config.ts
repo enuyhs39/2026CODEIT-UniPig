@@ -1,3 +1,5 @@
+import type { IncomeCategory } from "@/core/classify";
+
 /** 인증 없이 쓰는 고정 데모 유저 ID (절대 규칙 7번 — 인증은 안 붙이되 userId 컬럼은 남겨둔다). */
 export const DEMO_USER_ID = "demo-user";
 
@@ -36,6 +38,13 @@ export const SURVIVAL = {
   decayRate: 1.5,
   deadThreshold: 0.15,
 } as const;
+
+/**
+ * profileSource가 계산한 isOverdue를 사용자에게 "입금 지연 알림" 카드로 보여줄 카테고리.
+ * 캐시백/장학금/불규칙은 애초에 "정기적으로 들어와야 하는 돈"이 아니라서 지연이라는
+ * 개념 자체가 사용자에게 의미가 없다 — 용돈/알바처럼 실제로 매달 기대되는 소득원만 알린다.
+ */
+export const OVERDUE_ALERT_CATEGORIES: readonly IncomeCategory[] = ["allowance", "salary"];
 
 /** 소득원 카테고리별 계절성 계수. 데이터에서 학습하지 않고 명시 주입한다. */
 export const SEASONAL_FACTORS = {
