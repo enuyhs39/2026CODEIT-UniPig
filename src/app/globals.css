@@ -1,26 +1,28 @@
 @import "tailwindcss";
+@import "pretendard/dist/web/static/pretendard.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #dceeff;
+  --foreground: #2f4860;
+  --color-navy: #2f4860;
+  --color-cobalt: #7da7d9;
+  --color-butter: #fff7cc;
+  --color-ice: #dceeff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-navy: var(--color-navy);
+  --color-cobalt: var(--color-cobalt);
+  --color-butter: var(--color-butter);
+  --color-ice: var(--color-ice);
+  --font-sans: "Pretendard", var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Pretendard", Arial, Helvetica, sans-serif;
 }
