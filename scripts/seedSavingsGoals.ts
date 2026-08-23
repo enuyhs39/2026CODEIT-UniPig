@@ -15,7 +15,7 @@ async function main() {
     data: [
       {
         userId: DEMO_USER_ID,
-        title: "25AI 여행적금",
+        title: "여행 적금",
         targetAmount: 550_000,
         currentAmount: 350_000,
         targetDate: new Date("2026-12-31"),
@@ -23,7 +23,7 @@ async function main() {
       },
       {
         userId: DEMO_USER_ID,
-        title: "parking",
+        title: "비상금 모으기",
         targetAmount: 1_000_000,
         currentAmount: 500_000,
         targetDate: null,
@@ -31,7 +31,7 @@ async function main() {
       },
       {
         userId: DEMO_USER_ID,
-        title: "to.24 청년미래적금",
+        title: "전세자금 적립",
         targetAmount: 10_000_000,
         currentAmount: 0,
         targetDate: new Date("2028-12-31"),
@@ -39,7 +39,7 @@ async function main() {
       },
       {
         userId: DEMO_USER_ID,
-        title: "ETF",
+        title: "노트북 교체 자금",
         targetAmount: 1_200_000,
         currentAmount: 0,
         targetDate: new Date("2026-08-31"),
