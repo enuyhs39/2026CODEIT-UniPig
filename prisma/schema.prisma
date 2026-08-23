@@ -94,23 +94,32 @@ model UserPreference {
   @@map("user_preferences")
 }
 
-enum SavingsGoalStatus {
+enum PiggyBankItemStatus {
   PENDING
   IN_PROGRESS
   DONE
 }
 
-/// 저축 목표. 홈 화면 위젯에서 진행률로 표시.
-model SavingsGoal {
-  id            String            @id @default(cuid())
-  userId        String            @map("user_id")
-  title         String
-  targetAmount  Int               @map("target_amount")
-  currentAmount Int               @default(0) @map("current_amount")
-  targetDate    DateTime?         @map("target_date")
-  status        SavingsGoalStatus @default(IN_PROGRESS)
+enum PiggyBankCategory {
+  PARKING
+  SAVINGS
+  STOCK
+  OTHER
+}
 
-  @@map("savings_goals")
+/// 저금통(통장/주식/적금 등) 항목. 저금통 페이지에서 카드로 표시.
+model PiggyBankItem {
+  id            String              @id @default(cuid())
+  userId        String              @map("user_id")
+  title         String
+  category      PiggyBankCategory   @default(OTHER)
+  targetAmount  Int                 @map("target_amount")
+  currentAmount Int                 @default(0) @map("current_amount")
+  startDate     DateTime?           @map("start_date")
+  targetDate    DateTime?           @map("target_date")
+  status        PiggyBankItemStatus @default(PENDING)
+
+  @@map("piggybank_items")
 }
 
 enum LedgerEntryType {

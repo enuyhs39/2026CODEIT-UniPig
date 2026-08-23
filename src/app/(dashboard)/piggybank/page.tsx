@@ -1,106 +1,95 @@
-type PiggyBankTag = "적금" | "예금" | "주식" | "파킹";
+import { prisma } from "@/lib/prisma";
+import { DEMO_USER_ID } from "@/config";
+import { cn } from "@/lib/utils";
+import { PALETTE_BADGE_CLASSES } from "@/lib/categoryColors";
+import {
+  PIGGYBANK_CATEGORIES,
+  PIGGYBANK_CATEGORY_COLOR,
+  PIGGYBANK_CATEGORY_LABEL,
+  PIGGYBANK_STATUSES,
+  PIGGYBANK_STATUS_LABEL,
+} from "@/lib/piggyBankCategories";
+import { createPiggyBankItem, deletePiggyBankItem, updatePiggyBankItem } from "./actions";
 
-interface PiggyBankItem {
-  id: string;
-  emoji: string;
-  title: string;
-  tag?: PiggyBankTag;
-  targetAmount: number;
-  currentAmount: number;
-  startDate?: string;
-  endDate?: string;
+function toDateInputValue(date: Date | null): string {
+  return date ? date.toISOString().slice(0, 10) : "";
 }
 
-const PIGGY_BANKS: PiggyBankItem[] = [
-  {
-    id: "1",
-    emoji: "🎓",
-    title: "졸업여행 적금",
-    tag: "적금",
-    targetAmount: 500000,
-    currentAmount: 315000,
-    startDate: "2026-03-01",
-    endDate: "2026-08-31",
-  },
-  {
-    id: "2",
-    emoji: "📈",
-    title: "국내 ETF",
-    tag: "주식",
-    targetAmount: 1000000,
-    currentAmount: 240000,
-    endDate: "2026-11-30",
-  },
-  {
-    id: "3",
-    emoji: "🎉",
-    title: "취업 준비 적금",
-    tag: "적금",
-    targetAmount: 8000000,
-    currentAmount: 0,
-    startDate: "2026-09-01",
-    endDate: "2028-09-30",
-  },
-  {
-    id: "4",
-    emoji: "🚌",
-    title: "교통비 저금통",
-    tag: "파킹",
-    targetAmount: 600000,
-    currentAmount: 240000,
-  },
-];
+export default async function PiggyBankPage() {
+  const items = await prisma.piggyBankItem.findMany({
+    where: { userId: DEMO_USER_ID },
+    orderBy: { targetDate: "asc" },
+  });
 
-function formatWon(amount: number): string {
-  return `₩${amount.toLocaleString("ko-KR")}`;
-}
-
-function formatDate(date?: string): string | null {
-  if (!date) return null;
-  const d = new Date(date);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
-}
-
-export default function PiggyBankPage() {
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-[17px] font-bold">저금통</h1>
-        <button
-          type="button"
-          className="rounded-lg bg-accent px-3.5 py-1.5 text-[12.5px] font-semibold text-white transition-opacity hover:opacity-90"
-        >
-          새로 만들기
-        </button>
-      </div>
+      <h1 className="text-[17px] font-bold">저금통</h1>
 
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-        {PIGGY_BANKS.map((item) => {
+        {items.map((item) => {
           const pct =
             item.targetAmount > 0
               ? Math.min(100, Math.round((item.currentAmount / item.targetAmount) * 100))
               : 0;
-          const startLabel = formatDate(item.startDate);
-          const endLabel = formatDate(item.endDate);
-          const dateRange = startLabel && endLabel ? `${startLabel} → ${endLabel}` : endLabel;
 
           return (
-            <div
+            <form
               key={item.id}
+              action={updatePiggyBankItem}
               className="flex flex-col gap-3 rounded-2xl border border-card-border bg-card p-4"
             >
+              <input type="hidden" name="id" value={item.id} />
+
               <div className="flex items-center gap-2">
-                <span className="text-lg">{item.emoji}</span>
-                <span className="text-sm font-bold">{item.title}</span>
+                <input
+                  type="text"
+                  name="title"
+                  defaultValue={item.title}
+                  className="min-w-0 flex-1 rounded-lg border border-card-border bg-background px-2.5 py-1.5 text-sm font-bold outline-none focus:border-accent"
+                />
               </div>
 
-              {item.tag && (
-                <span className="w-fit rounded-full bg-gold-soft px-2.5 py-1 text-[11px] font-semibold text-gold">
-                  {item.tag}
-                </span>
-              )}
+              <select
+                name="category"
+                defaultValue={item.category}
+                className={cn(
+                  "w-fit rounded-full border-none px-2.5 py-1 text-[11px] font-semibold outline-none",
+                  PALETTE_BADGE_CLASSES[PIGGYBANK_CATEGORY_COLOR[item.category]],
+                )}
+              >
+                {PIGGYBANK_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {PIGGYBANK_CATEGORY_LABEL[category]}
+                  </option>
+                ))}
+              </select>
 
-              <span className="font-mono text-[15px] font-bold">{formatWon(item.targetAmount)}</span>
+              <div className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+                <input
+                  type="date"
+                  name="startDate"
+                  defaultValue={toDateInputValue(item.startDate)}
+                  className="min-w-0 flex-1 rounded-lg border border-card-border bg-background px-2 py-1.5 text-[11.5px] outline-none focus:border-accent"
+                />
+                <span>→</span>
+                <input
+                  type="date"
+                  name="targetDate"
+                  defaultValue={toDateInputValue(item.targetDate)}
+                  className="min-w-0 flex-1 rounded-lg border border-card-border bg-background px-2 py-1.5 text-[11.5px] outline-none focus:border-accent"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 font-mono text-[12.5px]">
+                <span className="text-muted-foreground">목표</span>
+                <input
+                  type="number"
+                  name="targetAmount"
+                  min={1}
+                  defaultValue={item.targetAmount}
+                  className="w-full min-w-0 rounded-lg border border-card-border bg-background px-2.5 py-1.5 text-[12.5px] outline-none focus:border-accent"
+                />
+              </div>
 
               <div className="flex items-center gap-2.5">
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-track">
@@ -109,22 +98,118 @@ export default function PiggyBankPage() {
                 <span className="font-mono text-[12px] font-bold text-accent">{pct}%</span>
               </div>
 
-              <span className="font-mono text-[12.5px] text-muted-foreground">
-                {formatWon(item.currentAmount)}
-              </span>
+              <div className="flex items-center gap-2 font-mono text-[12.5px]">
+                <span className="text-muted-foreground">달성</span>
+                <input
+                  type="number"
+                  name="currentAmount"
+                  min={0}
+                  defaultValue={item.currentAmount}
+                  className="w-full min-w-0 rounded-lg border border-card-border bg-background px-2.5 py-1.5 text-[12.5px] outline-none focus:border-accent"
+                />
+              </div>
 
-              {dateRange && <span className="text-[11.5px] text-muted-foreground">{dateRange}</span>}
-            </div>
+              <select
+                name="status"
+                defaultValue={item.status}
+                className="rounded-lg border border-card-border bg-background px-2.5 py-1.5 text-[12px] font-semibold outline-none focus:border-accent"
+              >
+                {PIGGYBANK_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {PIGGYBANK_STATUS_LABEL[status]}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex items-center gap-2 border-t border-card-border pt-3">
+                <button
+                  type="submit"
+                  className="flex-1 rounded-lg bg-accent px-3 py-1.5 text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
+                >
+                  저장
+                </button>
+                <button
+                  type="submit"
+                  formAction={deletePiggyBankItem}
+                  className="rounded-lg px-3 py-1.5 text-[12px] font-semibold text-danger transition-opacity hover:opacity-70"
+                >
+                  삭제
+                </button>
+              </div>
+            </form>
           );
         })}
 
-        <button
-          type="button"
-          className="flex min-h-[180px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-card-border text-[13px] font-semibold text-muted-foreground transition-colors hover:border-accent hover:text-accent"
+        <form
+          action={createPiggyBankItem}
+          className="flex flex-col gap-2.5 rounded-2xl border border-dashed border-card-border p-4"
         >
-          <span className="text-xl">+</span>
-          <span>새 페이지</span>
-        </button>
+          <p className="text-[12.5px] font-bold text-muted-foreground">새 저금통 추가</p>
+          <input
+            type="text"
+            name="title"
+            required
+            placeholder="이름 (예: 여행 적금)"
+            className="w-full rounded-lg border border-card-border bg-background px-3 py-2 text-[13px] outline-none focus:border-accent"
+          />
+          <select
+            name="category"
+            defaultValue="SAVINGS"
+            className="rounded-lg border border-card-border bg-background px-3 py-2 text-[13px] outline-none focus:border-accent"
+          >
+            {PIGGYBANK_CATEGORIES.map((category) => (
+              <option key={category} value={category}>
+                {PIGGYBANK_CATEGORY_LABEL[category]}
+              </option>
+            ))}
+          </select>
+          <div className="flex gap-2">
+            <input
+              type="date"
+              name="startDate"
+              className="w-full rounded-lg border border-card-border bg-background px-3 py-2 text-[13px] outline-none focus:border-accent"
+            />
+            <input
+              type="date"
+              name="targetDate"
+              className="w-full rounded-lg border border-card-border bg-background px-3 py-2 text-[13px] outline-none focus:border-accent"
+            />
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              name="targetAmount"
+              required
+              min={1}
+              placeholder="목표 금액"
+              className="w-full rounded-lg border border-card-border bg-background px-3 py-2 text-[13px] outline-none focus:border-accent"
+            />
+            <input
+              type="number"
+              name="currentAmount"
+              min={0}
+              placeholder="달성 금액"
+              className="w-full rounded-lg border border-card-border bg-background px-3 py-2 text-[13px] outline-none focus:border-accent"
+            />
+          </div>
+          <select
+            name="status"
+            defaultValue="PENDING"
+            className="rounded-lg border border-card-border bg-background px-3 py-2 text-[13px] outline-none focus:border-accent"
+          >
+            {PIGGYBANK_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {PIGGYBANK_STATUS_LABEL[status]}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className="self-start rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            추가
+          </button>
+        </form>
       </div>
     </div>
   );
