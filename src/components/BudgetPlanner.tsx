@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ExpenseCategory } from "@/config";
-import { formatWon } from "@/lib/format";
+import { formatWon, formatWonThousand } from "@/lib/format";
 
 const CATEGORIES: ExpenseCategory[] = ["식비", "카페", "쇼핑", "교통", "기타"];
 
@@ -86,10 +86,10 @@ export function BudgetPlanner({ targetMonth }: Props) {
 
   if (plan.status === "DEFICIT_ALERT") {
     return (
-      <div className="rounded-lg border border-butter bg-butter/60 p-4 text-navy">
+      <div className="rounded-2xl bg-butter/60 p-5 text-navy shadow-sm">
         <p className="text-sm leading-relaxed">
           예상 수입({formatWon(plan.baseIncome)})이 고정지출({formatWon(plan.fixedExpenses)})보다{" "}
-          <strong>{formatWon(plan.shortfall)}</strong> 부족해요. 고정지출을 줄이거나 수입원을 늘려야 해요.
+          <strong className="font-extrabold">{formatWon(plan.shortfall)}</strong> 부족해요. 고정지출을 줄이거나 수입원을 늘려야 해요.
         </p>
         <FixedExpensesInput value={fixedExpenses} onChange={setFixedExpenses} onApply={() => fetchDraft(fixedExpenses)} />
       </div>
@@ -102,17 +102,17 @@ export function BudgetPlanner({ targetMonth }: Props) {
   const spendable = total; // 카테고리 배분 합계 = disposable - saving (budget.ts 보존 법칙)
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-navy/10 bg-white p-4">
+    <div className="flex flex-col gap-5 rounded-2xl bg-white p-6 shadow-sm">
       <FixedExpensesInput value={fixedExpenses} onChange={setFixedExpenses} onApply={() => fetchDraft(fixedExpenses)} />
 
       <div className="grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-md bg-ice p-3">
+        <div className="rounded-xl bg-ice p-4">
           <p className="text-navy/50">다음 달 기준선</p>
-          <p className="font-semibold text-navy">{formatWon(plan.baseIncome)}</p>
+          <p className="font-black text-navy">{formatWonThousand(plan.baseIncome)}</p>
         </div>
-        <div className="rounded-md bg-ice p-3">
+        <div className="rounded-xl bg-ice p-4">
           <p className="text-navy/50">저축</p>
-          <p className="font-semibold text-navy">{formatWon(plan.saving)}</p>
+          <p className="font-black text-navy">{formatWon(plan.saving)}</p>
         </div>
       </div>
 
@@ -146,7 +146,7 @@ export function BudgetPlanner({ targetMonth }: Props) {
         type="button"
         onClick={handleConfirm}
         disabled={confirming}
-        className="self-start rounded-md bg-navy px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="self-start rounded-full bg-navy px-6 py-3 text-sm font-extrabold text-white disabled:opacity-50"
       >
         {confirming ? "확정하는 중..." : "예산 확정"}
       </button>
@@ -177,9 +177,9 @@ function FixedExpensesInput({
         step={1_000}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-32 rounded-md border border-navy/20 px-2 py-1 text-navy"
+        className="w-32 rounded-xl bg-ice px-3 py-1.5 text-navy"
       />
-      <button type="button" onClick={onApply} className="rounded-md border border-navy/30 px-2 py-1 text-navy">
+      <button type="button" onClick={onApply} className="rounded-full bg-ice px-3 py-1.5 font-medium text-navy">
         적용
       </button>
     </div>

@@ -5,10 +5,9 @@ import { nextMonthKey, toMonthKey } from "@/core/dateUtils";
 import type { IncomeCategory } from "@/core/classify";
 import { DEMO_USER_ID, OVERDUE_ALERT_CATEGORIES } from "@/config";
 import { loadIncomeTransactionsAndRules, loadTerminatedSourceIds } from "@/lib/incomeData";
-import { OverdueAlertCard } from "@/components/OverdueAlertCard";
-import { ForecastChart } from "@/components/ForecastChart";
+import { SourceStatusBadge } from "@/components/SourceStatusBadge";
 import { BudgetPlanner } from "@/components/BudgetPlanner";
-import { formatWon } from "@/lib/format";
+import { formatWon, formatWonThousand } from "@/lib/format";
 
 const CATEGORY_LABEL: Record<IncomeCategory, string> = {
   allowance: "용돈",
@@ -17,13 +16,11 @@ const CATEGORY_LABEL: Record<IncomeCategory, string> = {
   cashback: "캐시백",
   irregular: "불규칙",
 };
+const CATEGORY_ORDER: IncomeCategory[] = ["allowance", "salary", "scholarship", "cashback", "irregular"];
 
-function survivalBadge(alive: boolean) {
-  return alive ? (
-    <span className="rounded-full bg-cobalt/30 px-2.5 py-0.5 text-xs font-medium text-navy">생존 중</span>
-  ) : (
-    <span className="rounded-full bg-navy/10 px-2.5 py-0.5 text-xs font-medium text-navy/60">종료 추정</span>
-  );
+/** sourceId는 "가맹점명:category" 형태의 내부 그룹 키(classify.ts) — 화면엔 가맹점명만 보여준다. */
+function displaySourceName(sourceId: string): string {
+  return sourceId.split(":")[0];
 }
 
 export default async function Home() {
@@ -31,14 +28,12 @@ export default async function Home() {
     loadIncomeTransactionsAndRules(),
     loadTerminatedSourceIds(),
   ]);
-  const sources = buildProfiledSources(transactions, userRules, new Date(), terminatedSourceIds);
-
-  const overdueSources = sources.filter(
-    (s) => s.profile.isOverdue && OVERDUE_ALERT_CATEGORIES.includes(s.category),
-  );
+  const sources = buildProfiledSources(transactions, userRules, new Date(), terminatedSourceIds)
+  .sort((a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category));
 
   // 예측은 항상 "다음 달" 기준 — 이번 달 예산을 짜는 시점엔 다음 달 수입이 궁금하니까.
   const targetMonth = nextMonthKey(toMonthKey(new Date()));
+  const targetMonthNum = Number(targetMonth.split("-")[1]);
   const forecastSources: ForecastSourceInput[] = sources.map((s) => ({
     category: s.category,
     occurrenceProb: s.profile.occurrenceProb,
@@ -52,73 +47,69 @@ export default async function Home() {
   return (
     <div className="flex flex-col flex-1">
       <header className="bg-navy px-6 py-5 text-white">
-        <h1 className="text-lg font-semibold">UniPig</h1>
+        <h1 className="text-lg font-extrabold">UniPig</h1>
       </header>
 
       <main className="flex-1 bg-ice px-6 py-8">
         <div className="mx-auto flex max-w-2xl flex-col gap-10">
           <section className="flex flex-col gap-3">
-            <h2 className="text-base font-semibold text-navy">수입 구조</h2>
+            <h2 className="text-lg font-black text-navy">{targetMonthNum}월 예상 수입</h2>
 
-            {overdueSources.map((s) => (
-              <OverdueAlertCard
-                key={s.sourceId}
-                sourceId={s.sourceId}
-                categoryLabel={CATEGORY_LABEL[s.category]}
-                periodDays={s.profile.periodDays}
-                elapsedDays={s.profile.elapsedDays}
-              />
-            ))}
-
-            {sources.length === 0 && (
-              <p className="text-sm text-navy/60">아직 프로파일링된 소득원이 없어요.</p>
-            )}
-            {sources.map((s) => (
-              <div key={s.sourceId} className="rounded-lg border border-navy/10 bg-white p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-medium text-navy">{s.sourceId}</p>
-                    <p className="text-sm text-navy/60">{CATEGORY_LABEL[s.category]}</p>
-                  </div>
-                  {survivalBadge(s.profile.alive)}
-                </div>
-                <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                  <div>
-                    <dt className="text-navy/50">주기</dt>
-                    <dd className="text-navy">{Math.round(s.profile.periodDays)}일</dd>
-                  </div>
-                  <div>
-                    <dt className="text-navy/50">평균 금액</dt>
-                    <dd className="text-navy">{formatWon(s.profile.amountMu)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-navy/50">마지막 입금</dt>
-                    <dd className="text-navy">{s.profile.lastSeen.toISOString().slice(0, 10)}</dd>
-                  </div>
-                </dl>
-              </div>
-            ))}
-          </section>
-
-          <section className="flex flex-col gap-3">
-            <h2 className="text-base font-semibold text-navy">예측 · {targetMonth}</h2>
-
-            <div className="rounded-lg border border-navy/10 bg-white p-4">
-              <p className="text-sm leading-relaxed text-navy">
-                다음 달 예상 수입 범위는 <strong>{formatWon(forecast.percentiles.p10)}</strong> ~{" "}
-                <strong>{formatWon(forecast.percentiles.p90)}</strong>이에요. 기준선{" "}
-                <strong>{formatWon(forecast.percentiles.p25)}</strong>으로 안전하게 잡았어요.
+            <div className="rounded-2xl bg-white p-6 shadow-sm">
+              <p className="text-sm text-navy/50">예상 수입 범위</p>
+              <p className="mt-2 text-2xl font-black leading-snug text-navy">
+                {formatWonThousand(forecast.percentiles.p10)} ~ {formatWonThousand(forecast.percentiles.p90)}
               </p>
-              <ForecastChart forecast={forecast} />
-              <p className="text-xs text-navy/50">
-                점선은 P25(기준선)·P50(중앙값), 음영 구간은 P10~P90 범위예요.
+              <p className="mt-3 text-sm leading-relaxed text-navy/70">
+                기준선은 <strong className="font-extrabold text-navy">{formatWonThousand(forecast.percentiles.p25)}</strong>으로
+                안전하게 잡았어요.
               </p>
             </div>
           </section>
 
           <section className="flex flex-col gap-3">
-            <h2 className="text-base font-semibold text-navy">예산 · {targetMonth}</h2>
+            <h2 className="text-lg font-black text-navy">{targetMonthNum}월 맞춤 예산안</h2>
             <BudgetPlanner targetMonth={targetMonth} />
+          </section>
+
+          <section className="flex flex-col gap-3">
+            <h2 className="text-lg font-black text-navy">수입 목록</h2>
+
+            {sources.length === 0 && (
+              <p className="text-sm text-navy/60">아직 프로파일링된 소득원이 없어요.</p>
+            )}
+            {sources.map((s) => (
+              <div key={s.sourceId} className="rounded-2xl bg-white p-5 shadow-sm">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-extrabold text-navy">{displaySourceName(s.sourceId)}</p>
+                    <p className="text-sm text-navy/60">{CATEGORY_LABEL[s.category]}</p>
+                  </div>
+                  {!s.profile.alive && OVERDUE_ALERT_CATEGORIES.includes(s.category) && (
+                    <SourceStatusBadge
+                      sourceId={s.sourceId}
+                      categoryLabel={CATEGORY_LABEL[s.category]}
+                      periodDays={s.profile.periodDays}
+                      elapsedDays={s.profile.elapsedDays}
+                    />
+                  )}
+                </div>
+                <dl className="mt-4 grid grid-cols-3 gap-2 text-sm">
+                  <div>
+                    <dt className="text-navy/50">주기</dt>
+                    <dd className="font-medium text-navy">{Math.round(s.profile.periodDays)}일</dd>
+                  </div>
+                  <div>
+                    <dt className="text-navy/50">평균 금액</dt>
+                    <dd className="font-medium text-navy">{formatWon(s.profile.amountMu)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-navy/50">마지막 입금</dt>
+                    <dd className="font-medium text-navy">{s.profile.lastSeen.toISOString().slice(0, 10)}</dd>
+                  </div>
+                </dl>
+              </div>
+            ))}
           </section>
         </div>
       </main>
