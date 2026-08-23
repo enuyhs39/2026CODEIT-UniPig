@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { DEMO_USER_ID } from "@/config";
+import { requireUserId } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_NICKNAME = "피그";
@@ -8,7 +8,8 @@ const DEFAULT_NICKNAME = "피그";
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 export default async function HomePage() {
-  const preference = await prisma.userPreference.findUnique({ where: { userId: DEMO_USER_ID } });
+  const userId = await requireUserId();
+  const preference = await prisma.userPreference.findUnique({ where: { userId } });
   const nickname = preference?.nickname || DEFAULT_NICKNAME;
 
   const now = new Date();

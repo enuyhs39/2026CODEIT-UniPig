@@ -5,9 +5,11 @@
  */
 
 import "dotenv/config";
-import { DEMO_USER_ID } from "@/config";
 import { prisma } from "@/lib/prisma";
+import { requireSeedUserId } from "./seedUserId";
 import type { PiggyBankCategory, PiggyBankItemStatus } from "@/generated/prisma/enums";
+
+const DEMO_USER_ID = requireSeedUserId();
 
 const ITEMS: {
   title: string;

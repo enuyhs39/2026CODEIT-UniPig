@@ -26,6 +26,13 @@ enum BudgetStatus {
   DEFICIT_ALERT
 }
 
+enum FixedExpenseCategory {
+  TRANSPORT
+  RENT
+  PHONE
+  SUBSCRIPTION
+}
+
 /// 원본 입출금 내역. 금액은 입금+/출금- 정수(원).
 model Transaction {
   id           String   @id @default(cuid())
@@ -181,4 +188,28 @@ model LedgerEntry {
   category LedgerCategory @relation(fields: [categoryId], references: [id])
 
   @@map("ledger_entries")
+}
+
+/// 사용자가 "종료 확정"한 소득원. 계산으로는 알 수 없는 사용자의 판단이라 저장이 필요하다.
+/// sourceId = sourcePipeline.ts의 정규화된 소득원 키(정규화counterparty:category).
+/// sourceId 단독으로는 사용자 간에 겹칠 수 있어(같은 정규화 거래처명+카테고리) userId까지 묶어 복합키로 잡는다.
+model SourceTermination {
+  sourceId    String   @map("source_id")
+  userId      String   @map("user_id")
+  confirmedAt DateTime @default(now()) @map("confirmed_at")
+
+  @@id([sourceId, userId])
+  @@map("source_terminations")
+}
+
+/// 사용자가 설정한 카테고리별 고정지출. 온보딩(예산 화면 첫 진입) 시 시드되고, 마이페이지에서 수정 가능.
+/// BudgetPlanner의 "고정지출 입력"은 이 합계를 기본값으로 불러온다(override 가능).
+model FixedExpense {
+  id       String               @id @default(cuid())
+  userId   String               @map("user_id")
+  category FixedExpenseCategory
+  amount   Int
+
+  @@unique([userId, category])
+  @@map("fixed_expenses")
 }

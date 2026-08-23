@@ -6,9 +6,11 @@
  */
 
 import "dotenv/config";
-import { DEMO_USER_ID } from "@/config";
 import { prisma } from "@/lib/prisma";
+import { requireSeedUserId } from "./seedUserId";
 import type { ExpenseCategory, IncomeCategory, LedgerEntryType, PaletteColor } from "@/generated/prisma/enums";
+
+const DEMO_USER_ID = requireSeedUserId();
 
 type CategorySeed = {
   label: string;

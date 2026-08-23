@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { DEMO_USER_ID } from "@/config";
+import { requireUserId } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { PALETTE_BADGE_CLASSES } from "@/lib/categoryColors";
 import { EntryTypeCategoryFields } from "@/components/transactions/entry-type-category-fields";
@@ -23,6 +23,7 @@ function toDateInputValue(date: Date): string {
 }
 
 export default async function TransactionsPage({ searchParams }: PageProps<"/transactions">) {
+  const userId = await requireUserId();
   const params = await searchParams;
   const sort = params.sort === "asc" ? "asc" : "desc";
   const fromRaw = typeof params.from === "string" ? params.from : "";
@@ -41,12 +42,12 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
 
   const [entries, categories] = await Promise.all([
     prisma.ledgerEntry.findMany({
-      where: { userId: DEMO_USER_ID, date: { gte: rangeStart, lt: rangeEnd } },
+      where: { userId, date: { gte: rangeStart, lt: rangeEnd } },
       orderBy: { date: sort },
       include: { category: true },
     }),
     prisma.ledgerCategory.findMany({
-      where: { userId: DEMO_USER_ID },
+      where: { userId },
       orderBy: { sortOrder: "asc" },
     }),
   ]);

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { DEMO_USER_ID } from "@/config";
+import { requireUserId } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { PALETTE_BADGE_CLASSES } from "@/lib/categoryColors";
 import {
@@ -16,8 +16,9 @@ function toDateInputValue(date: Date | null): string {
 }
 
 export default async function PiggyBankPage() {
+  const userId = await requireUserId();
   const items = await prisma.piggyBankItem.findMany({
-    where: { userId: DEMO_USER_ID },
+    where: { userId },
     orderBy: { targetDate: "asc" },
   });
 

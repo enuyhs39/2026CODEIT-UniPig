@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "pretendard/dist/web/static/pretendard.css";
 
 :root {
   --background: #dceeff;
@@ -34,6 +35,11 @@
   --tag-pink-text: #b8478e;
   --tag-red-bg: #fbe4e4;
   --tag-red-text: #b5524a;
+
+  --color-navy: #2f4860;
+  --color-cobalt: #7da7d9;
+  --color-butter: #fff7cc;
+  --color-ice: #dceeff;
 }
 
 @theme inline {
@@ -69,7 +75,11 @@
   --color-tag-pink-text: var(--tag-pink-text);
   --color-tag-red-bg: var(--tag-red-bg);
   --color-tag-red-text: var(--tag-red-text);
-  --font-sans: var(--font-geist-sans);
+  --color-navy: var(--color-navy);
+  --color-cobalt: var(--color-cobalt);
+  --color-butter: var(--color-butter);
+  --color-ice: var(--color-ice);
+  --font-sans: "Pretendard", var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 

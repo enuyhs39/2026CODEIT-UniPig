@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { DEMO_USER_ID } from "@/config";
+import { requireUserId } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/mypage/theme-toggle";
 import { CategoryColorPicker } from "@/components/mypage/category-color-picker";
@@ -14,14 +14,15 @@ import {
 } from "./actions";
 
 export default async function MyPage() {
+  const userId = await requireUserId();
   const cookieStore = await cookies();
   const themeCookie = cookieStore.get("unipig-theme")?.value;
   const initialTheme = themeCookie === "dark" ? "dark" : "light";
 
   const [preference, categories] = await Promise.all([
-    prisma.userPreference.findUnique({ where: { userId: DEMO_USER_ID } }),
+    prisma.userPreference.findUnique({ where: { userId } }),
     prisma.ledgerCategory.findMany({
-      where: { userId: DEMO_USER_ID },
+      where: { userId },
       orderBy: { sortOrder: "asc" },
     }),
   ]);

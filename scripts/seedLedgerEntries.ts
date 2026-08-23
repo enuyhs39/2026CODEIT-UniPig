@@ -6,9 +6,11 @@
  */
 
 import "dotenv/config";
-import { DEMO_USER_ID } from "@/config";
 import { prisma } from "@/lib/prisma";
+import { requireSeedUserId } from "./seedUserId";
 import type { LedgerEntryType } from "@/generated/prisma/enums";
+
+const DEMO_USER_ID = requireSeedUserId();
 
 const ENTRIES: { date: string; type: LedgerEntryType; category: string; description: string; amount: number; isDone: boolean }[] = [
   { date: "2026-08-01", type: "INCOME", category: "용돈", description: "이번 달 용돈", amount: 400_000, isDone: true },

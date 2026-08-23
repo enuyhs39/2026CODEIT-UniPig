@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { DEMO_USER_ID } from "@/config";
+import { requireUserId } from "@/lib/session";
 import { PIGGYBANK_CATEGORIES, PIGGYBANK_STATUSES } from "@/lib/piggyBankCategories";
 import type { PiggyBankCategory, PiggyBankItemStatus } from "@/generated/prisma/enums";
 
@@ -22,6 +22,7 @@ function parseDate(value: FormDataEntryValue | null): Date | null {
 }
 
 export async function createPiggyBankItem(formData: FormData) {
+  const userId = await requireUserId();
   const title = String(formData.get("title") ?? "").trim();
   const targetAmount = Number(formData.get("targetAmount"));
   const currentAmount = Number(formData.get("currentAmount") ?? 0);
@@ -32,7 +33,7 @@ export async function createPiggyBankItem(formData: FormData) {
 
   await prisma.piggyBankItem.create({
     data: {
-      userId: DEMO_USER_ID,
+      userId,
       title,
       category: parseCategory(formData.get("category")),
       targetAmount: Math.round(targetAmount),
@@ -47,6 +48,7 @@ export async function createPiggyBankItem(formData: FormData) {
 }
 
 export async function updatePiggyBankItem(formData: FormData) {
+  const userId = await requireUserId();
   const id = String(formData.get("id") ?? "");
   const title = String(formData.get("title") ?? "").trim();
   const targetAmount = Number(formData.get("targetAmount"));
@@ -57,7 +59,7 @@ export async function updatePiggyBankItem(formData: FormData) {
   if (!Number.isFinite(currentAmount) || currentAmount < 0) return;
 
   await prisma.piggyBankItem.updateMany({
-    where: { id, userId: DEMO_USER_ID },
+    where: { id, userId },
     data: {
       title,
       category: parseCategory(formData.get("category")),
@@ -73,10 +75,11 @@ export async function updatePiggyBankItem(formData: FormData) {
 }
 
 export async function deletePiggyBankItem(formData: FormData) {
+  const userId = await requireUserId();
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
-  await prisma.piggyBankItem.deleteMany({ where: { id, userId: DEMO_USER_ID } });
+  await prisma.piggyBankItem.deleteMany({ where: { id, userId } });
 
   revalidatePath("/piggybank");
 }

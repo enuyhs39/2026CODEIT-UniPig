@@ -6,8 +6,10 @@
  */
 
 import "dotenv/config";
-import { DEMO_USER_ID } from "@/config";
 import { prisma } from "@/lib/prisma";
+import { requireSeedUserId } from "./seedUserId";
+
+const DEMO_USER_ID = requireSeedUserId();
 
 const YEAR = 2026;
 const MONTH = 8; // 1-indexed

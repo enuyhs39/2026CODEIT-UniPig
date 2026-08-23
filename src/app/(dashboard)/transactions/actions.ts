@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { DEMO_USER_ID } from "@/config";
+import { requireUserId } from "@/lib/session";
 
 export async function createLedgerEntry(formData: FormData) {
+  const userId = await requireUserId();
   const date = String(formData.get("date") ?? "");
   const type = String(formData.get("type") ?? "");
   const categoryId = String(formData.get("categoryId") ?? "");
@@ -16,13 +17,13 @@ export async function createLedgerEntry(formData: FormData) {
   if (!Number.isFinite(amount) || amount <= 0) return;
 
   const category = await prisma.ledgerCategory.findFirst({
-    where: { id: categoryId, userId: DEMO_USER_ID },
+    where: { id: categoryId, userId },
   });
   if (!category || category.type !== type) return;
 
   await prisma.ledgerEntry.create({
     data: {
-      userId: DEMO_USER_ID,
+      userId,
       date: new Date(date),
       type,
       categoryId: category.id,
@@ -35,12 +36,13 @@ export async function createLedgerEntry(formData: FormData) {
 }
 
 export async function toggleLedgerEntryDone(formData: FormData) {
+  const userId = await requireUserId();
   const id = String(formData.get("id") ?? "");
   const isDone = formData.get("isDone") === "true";
   if (!id) return;
 
   await prisma.ledgerEntry.updateMany({
-    where: { id, userId: DEMO_USER_ID },
+    where: { id, userId },
     data: { isDone: !isDone },
   });
 
@@ -48,10 +50,11 @@ export async function toggleLedgerEntryDone(formData: FormData) {
 }
 
 export async function deleteLedgerEntry(formData: FormData) {
+  const userId = await requireUserId();
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
-  await prisma.ledgerEntry.deleteMany({ where: { id, userId: DEMO_USER_ID } });
+  await prisma.ledgerEntry.deleteMany({ where: { id, userId } });
 
   revalidatePath("/transactions");
 }

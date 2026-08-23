@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { DEMO_USER_ID, DEFAULT_SAVING_RATE } from "@/config";
+import { requireUserId } from "@/lib/session";
+import { DEFAULT_SAVING_RATE } from "@/config";
 import { PALETTE_COLORS } from "@/lib/categoryColors";
 import { EXPENSE_GROUPS, INCOME_GROUPS } from "@/lib/aiCategoryGroups";
 import type { ExpenseCategory, IncomeCategory, LedgerEntryType, PaletteColor } from "@/generated/prisma/enums";
@@ -11,13 +12,14 @@ const MAX_NICKNAME_LENGTH = 20;
 const MAX_CATEGORY_LABEL_LENGTH = 20;
 
 export async function updateNickname(formData: FormData) {
+  const userId = await requireUserId();
   const nickname = String(formData.get("nickname") ?? "").trim().slice(0, MAX_NICKNAME_LENGTH);
   if (!nickname) return;
 
   await prisma.userPreference.upsert({
-    where: { userId: DEMO_USER_ID },
+    where: { userId },
     update: { nickname },
-    create: { userId: DEMO_USER_ID, nickname, weights: {}, savingRate: DEFAULT_SAVING_RATE },
+    create: { userId, nickname, weights: {}, savingRate: DEFAULT_SAVING_RATE },
   });
 
   revalidatePath("/mypage");
@@ -42,16 +44,17 @@ function resolveAiGroup(value: FormDataEntryValue | null) {
 }
 
 export async function createLedgerCategory(formData: FormData) {
+  const userId = await requireUserId();
   const label = String(formData.get("label") ?? "").trim().slice(0, MAX_CATEGORY_LABEL_LENGTH);
   const color = parseColor(formData.get("color"));
   const resolved = resolveAiGroup(formData.get("aiGroup"));
   if (!label || !resolved) return;
 
-  const count = await prisma.ledgerCategory.count({ where: { userId: DEMO_USER_ID } });
+  const count = await prisma.ledgerCategory.count({ where: { userId } });
 
   try {
     await prisma.ledgerCategory.create({
-      data: { userId: DEMO_USER_ID, label, color, ...resolved, sortOrder: count },
+      data: { userId, label, color, ...resolved, sortOrder: count },
     });
   } catch {
     return;
@@ -62,6 +65,7 @@ export async function createLedgerCategory(formData: FormData) {
 }
 
 export async function updateLedgerCategory(formData: FormData) {
+  const userId = await requireUserId();
   const id = String(formData.get("id") ?? "");
   const label = String(formData.get("label") ?? "").trim().slice(0, MAX_CATEGORY_LABEL_LENGTH);
   const color = parseColor(formData.get("color"));
@@ -70,7 +74,7 @@ export async function updateLedgerCategory(formData: FormData) {
 
   try {
     await prisma.ledgerCategory.updateMany({
-      where: { id, userId: DEMO_USER_ID },
+      where: { id, userId },
       data: { label, color, ...resolved },
     });
   } catch {
@@ -82,11 +86,12 @@ export async function updateLedgerCategory(formData: FormData) {
 }
 
 export async function deleteLedgerCategory(formData: FormData) {
+  const userId = await requireUserId();
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
   try {
-    await prisma.ledgerCategory.deleteMany({ where: { id, userId: DEMO_USER_ID } });
+    await prisma.ledgerCategory.deleteMany({ where: { id, userId } });
   } catch {
     // 이 구분을 사용 중인 지출/수입 항목이 있으면 삭제하지 않는다.
     return;
