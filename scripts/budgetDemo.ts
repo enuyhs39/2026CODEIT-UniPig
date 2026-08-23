@@ -20,11 +20,13 @@ import { nextMonthKey, toMonthKey } from "@/core/dateUtils";
 import {
   DEFAULT_BUDGET_PROFILE,
   DEFAULT_SAVING_RATE,
-  DEMO_USER_ID,
   FEEDBACK_EMA_ALPHA,
   type ExpenseCategory,
 } from "@/config";
 import { prisma } from "@/lib/prisma";
+
+/** 로그인 없이 로컬에서 더미데이터를 돌릴 때 쓰는 테스트 유저 ID. 실제 앱은 인증된 userId를 쓴다. */
+const DEMO_USER_ID = "demo-user";
 
 const FORECAST_SEED = 42;
 const SIMULATION_ROUNDS = 3;

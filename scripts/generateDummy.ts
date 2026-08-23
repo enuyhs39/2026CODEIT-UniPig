@@ -12,8 +12,11 @@ import "dotenv/config";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { mulberry32 } from "@/core/stats";
-import { DEMO_USER_ID, MERCHANT_CATEGORY_MAP, SEASONAL_FACTORS, type ExpenseCategory } from "@/config";
+import { MERCHANT_CATEGORY_MAP, SEASONAL_FACTORS, type ExpenseCategory } from "@/config";
 import { prisma } from "@/lib/prisma";
+
+/** 로그인 없이 로컬에서 더미데이터를 돌릴 때 쓰는 테스트 유저 ID. 실제 앱은 인증된 userId를 쓴다. */
+const DEMO_USER_ID = "demo-user";
 
 const WINDOW_MONTHS = 12;
 const CAFE_ACTIVE_COUNT = 8; // 창의 첫 8개월만 활성, 나머지 4개월(가장 최근)은 중단

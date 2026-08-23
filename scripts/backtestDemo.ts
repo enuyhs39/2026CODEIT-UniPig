@@ -9,8 +9,10 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBacktest, type BacktestMonthResult } from "@/core/backtest";
 import { lastNMonthKeys } from "@/core/dateUtils";
-import { DEMO_USER_ID } from "@/config";
 import { prisma } from "@/lib/prisma";
+
+/** 로그인 없이 로컬에서 더미데이터를 돌릴 때 쓰는 테스트 유저 ID. 실제 앱은 인증된 userId를 쓴다. */
+const DEMO_USER_ID = "demo-user";
 
 const BACKTEST_SEED = 42;
 const HOLDOUT_MONTH_COUNT = 3;

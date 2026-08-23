@@ -6,10 +6,16 @@
 
 import { NextResponse } from "next/server";
 import { updateWeightsFromConfirmation } from "@/core/feedback";
-import { DEFAULT_SAVING_RATE, DEMO_USER_ID, type ExpenseCategory } from "@/config";
+import { DEFAULT_SAVING_RATE, type ExpenseCategory } from "@/config";
+import { getCurrentUserId } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
+  }
+
   const body = await request.json().catch(() => ({}));
   const planId: string | undefined = body.planId;
   const allocations: Record<ExpenseCategory, number> | undefined = body.allocations;
@@ -19,11 +25,11 @@ export async function POST(request: Request) {
   }
 
   const plan = await prisma.budgetPlan.findUnique({ where: { id: planId } });
-  if (!plan || plan.userId !== DEMO_USER_ID) {
+  if (!plan || plan.userId !== userId) {
     return NextResponse.json({ error: "예산안을 찾을 수 없습니다" }, { status: 404 });
   }
 
-  const pref = await prisma.userPreference.findUnique({ where: { userId: DEMO_USER_ID } });
+  const pref = await prisma.userPreference.findUnique({ where: { userId } });
   const currentWeights = (pref?.weights as Record<ExpenseCategory, number>) ?? {};
 
   const newWeights = updateWeightsFromConfirmation(
@@ -35,9 +41,9 @@ export async function POST(request: Request) {
   const [updatedPlan] = await prisma.$transaction([
     prisma.budgetPlan.update({ where: { id: planId }, data: { allocations, status: "CONFIRMED" } }),
     prisma.userPreference.upsert({
-      where: { userId: DEMO_USER_ID },
+      where: { userId },
       update: { weights: newWeights },
-      create: { userId: DEMO_USER_ID, weights: newWeights, savingRate: DEFAULT_SAVING_RATE },
+      create: { userId, weights: newWeights, savingRate: DEFAULT_SAVING_RATE },
     }),
   ]);
 

@@ -1,8 +1,5 @@
 import type { IncomeCategory } from "@/core/classify";
 
-/** 인증 없이 쓰는 고정 데모 유저 ID (절대 규칙 7번 — 인증은 안 붙이되 userId 컬럼은 남겨둔다). */
-export const DEMO_USER_ID = "demo-user";
-
 /** 예산 기준선 분위수. 기본은 balanced(P25) — 절대 규칙 4번, 하드코딩 금지. */
 export const BASE_INCOME_QUANTILES = {
   safe: 0.1,
@@ -37,6 +34,15 @@ export const HISTOGRAM_BINS = 20;
 
 /** 예산 배분에 쓰는 지출 카테고리. */
 export type ExpenseCategory = "식비" | "카페" | "쇼핑" | "교통" | "기타";
+
+/** 사용자 가중치가 아직 없을 때(첫 예산 초안, 온보딩 직후)의 기본 가중치 — 전 카테고리 동등. */
+export const DEFAULT_BUDGET_WEIGHTS: Record<ExpenseCategory, number> = {
+  식비: 1,
+  카페: 1,
+  쇼핑: 1,
+  교통: 1,
+  기타: 1,
+};
 
 /** 카테고리별 최소 생계선(원). 예산 배분이 이 아래로 내려가지 않도록 보장한다. */
 export const MIN_SUBSISTENCE: Partial<Record<ExpenseCategory, number>> = {
@@ -77,6 +83,17 @@ export const BUDGET_ROUNDING_UNIT = 1_000;
 
 /** 기본 저축률. UserPreference.savingRate 초기값과 동일해야 한다. */
 export const DEFAULT_SAVING_RATE = 0.1;
+
+/** 온보딩에서 입력받는 카테고리별 고정지출 라벨. */
+export const FIXED_EXPENSE_CATEGORY_LABEL: Record<
+  "TRANSPORT" | "RENT" | "PHONE" | "SUBSCRIPTION",
+  string
+> = {
+  TRANSPORT: "교통비",
+  RENT: "월세",
+  PHONE: "통신비",
+  SUBSCRIPTION: "구독비용",
+};
 
 /** 소득원 생존 확률 계산 파라미터. ratio = elapsed / periodDays. */
 export const SURVIVAL = {

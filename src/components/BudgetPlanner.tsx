@@ -74,7 +74,16 @@ export function BudgetPlanner({ targetMonth, confirmedProgress }: Props) {
 
   useEffect(() => {
     if (confirmedProgress) return;
-    fetchDraft(0);
+
+    // 온보딩/마이페이지에서 저장한 카테고리별 고정지출 합계를 기본값으로 불러온다 — 매번 직접 입력하지 않아도 되게.
+    // 기존 수동 입력(FixedExpensesInput, "적용" 버튼)은 그대로 둬서 override는 계속 가능하다.
+    fetch("/api/preferences/fixed-expenses")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: Record<string, number> | null) => {
+        const sum = data ? Object.values(data).reduce((a, b) => a + b, 0) : 0;
+        setFixedExpenses(sum);
+        fetchDraft(sum);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetMonth]);
 
@@ -180,11 +189,11 @@ function BudgetProgressView({ progress }: { progress: ConfirmedProgress }) {
     <div className="flex flex-col gap-5 rounded-2xl bg-white p-6 shadow-sm">
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div className="rounded-xl bg-ice p-4">
-          <p className="text-navy/50">확정 기준선</p>
+          <p className="text-navy/50">예상 수입</p>
           <p className="font-black text-navy">{formatWonThousand(progress.baseIncome)}</p>
         </div>
         <div className="rounded-xl bg-ice p-4">
-          <p className="text-navy/50">저축</p>
+          <p className="text-navy/50">저축 비용</p>
           <p className="font-black text-navy">{formatWon(progress.saving)}</p>
         </div>
       </div>

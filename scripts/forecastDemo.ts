@@ -8,8 +8,10 @@ import "dotenv/config";
 import { classifyIncomeTransactions, type IncomeCategory } from "@/core/classify";
 import { profileSource, type IncomeOccurrence } from "@/core/profiling";
 import { forecastIncome, type ForecastSourceInput } from "@/core/forecast";
-import { DEMO_USER_ID } from "@/config";
 import { prisma } from "@/lib/prisma";
+
+/** 로그인 없이 로컬에서 더미데이터를 돌릴 때 쓰는 테스트 유저 ID. 실제 앱은 인증된 userId를 쓴다. */
+const DEMO_USER_ID = "demo-user";
 
 const FORECAST_SEED = 42;
 const HISTOGRAM_BAR_WIDTH = 40; // 텍스트 히스토그램 최대 막대 길이(문자 수)

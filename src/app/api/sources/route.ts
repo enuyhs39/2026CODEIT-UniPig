@@ -8,11 +8,17 @@ import { NextResponse } from "next/server";
 import { buildProfiledSources } from "@/core/sourcePipeline";
 import { OVERDUE_ALERT_CATEGORIES } from "@/config";
 import { loadIncomeTransactionsAndRules, loadTerminatedSourceIds } from "@/lib/incomeData";
+import { getCurrentUserId } from "@/lib/session";
 
 export async function GET() {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
+  }
+
   const [{ transactions, userRules }, terminatedSourceIds] = await Promise.all([
-    loadIncomeTransactionsAndRules(),
-    loadTerminatedSourceIds(),
+    loadIncomeTransactionsAndRules(userId),
+    loadTerminatedSourceIds(userId),
   ]);
   const sources = buildProfiledSources(transactions, userRules, new Date(), terminatedSourceIds);
 

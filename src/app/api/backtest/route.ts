@@ -5,15 +5,20 @@
 import { NextResponse } from "next/server";
 import { runBacktest } from "@/core/backtest";
 import { lastNMonthKeys } from "@/core/dateUtils";
-import { DEMO_USER_ID } from "@/config";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUserId } from "@/lib/session";
 
 const BACKTEST_SEED = 42;
 const HOLDOUT_MONTH_COUNT = 3;
 
 export async function GET() {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
+  }
+
   const transactions = await prisma.transaction.findMany({
-    where: { userId: DEMO_USER_ID },
+    where: { userId },
     orderBy: { occurredAt: "asc" },
   });
 

@@ -8,8 +8,14 @@
 
 import { NextResponse } from "next/server";
 import { terminateSource } from "@/lib/incomeData";
+import { getCurrentUserId } from "@/lib/session";
 
 export async function POST(request: Request) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
+  }
+
   const body = await request.json().catch(() => ({}));
   const sourceId: string | undefined = body.sourceId;
 
@@ -17,7 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "sourceId가 필요합니다" }, { status: 400 });
   }
 
-  await terminateSource(sourceId);
+  await terminateSource(userId, sourceId);
 
   return NextResponse.json({ sourceId, terminated: true });
 }
