@@ -1,12 +1,14 @@
 import { buildProfiledSources } from "@/core/sourcePipeline";
 import { forecastIncome, type ForecastSourceInput } from "@/core/forecast";
 import { hashSeed } from "@/core/stats";
-import { nextMonthKey, toMonthKey } from "@/core/dateUtils";
+import { monthStart, toMonthKey } from "@/core/dateUtils";
 import type { IncomeCategory } from "@/core/classify";
-import { DEMO_USER_ID, OVERDUE_ALERT_CATEGORIES } from "@/config";
+import { sumSpendByCategory } from "@/core/classifyExpense";
+import { DEMO_USER_ID, OVERDUE_ALERT_CATEGORIES, type ExpenseCategory } from "@/config";
 import { loadIncomeTransactionsAndRules, loadTerminatedSourceIds } from "@/lib/incomeData";
+import { prisma } from "@/lib/prisma";
 import { SourceStatusBadge } from "@/components/SourceStatusBadge";
-import { BudgetPlanner } from "@/components/BudgetPlanner";
+import { BudgetPlanner, type ConfirmedProgress } from "@/components/BudgetPlanner";
 import { formatWon, formatWonThousand } from "@/lib/format";
 
 const CATEGORY_LABEL: Record<IncomeCategory, string> = {
@@ -31,8 +33,9 @@ export default async function Home() {
   const sources = buildProfiledSources(transactions, userRules, new Date(), terminatedSourceIds)
   .sort((a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category));
 
-  // 예측은 항상 "다음 달" 기준 — 이번 달 예산을 짜는 시점엔 다음 달 수입이 궁금하니까.
-  const targetMonth = nextMonthKey(toMonthKey(new Date()));
+  // 예산 화면은 항상 "이번 달" 기준 — 이번 달에 이미 확정한 예산이 있으면 진행률을 보여주고,
+  // 없으면 이번 달 예산을 새로 짠다.
+  const targetMonth = toMonthKey(new Date());
   const targetMonthNum = Number(targetMonth.split("-")[1]);
   const forecastSources: ForecastSourceInput[] = sources.map((s) => ({
     category: s.category,
@@ -43,6 +46,22 @@ export default async function Home() {
   }));
   const seed = hashSeed(`${DEMO_USER_ID}:${targetMonth}`);
   const forecast = forecastIncome(forecastSources, targetMonth, seed);
+
+  const confirmedPlan = await prisma.budgetPlan.findFirst({
+    where: { userId: DEMO_USER_ID, targetMonth, status: "CONFIRMED" },
+  });
+  let confirmedProgress: ConfirmedProgress | null = null;
+  if (confirmedPlan) {
+    const monthTransactions = await prisma.transaction.findMany({
+      where: { userId: DEMO_USER_ID, occurredAt: { gte: monthStart(targetMonth), lte: new Date() } },
+    });
+    confirmedProgress = {
+      baseIncome: confirmedPlan.baseIncome,
+      saving: confirmedPlan.saving,
+      allocations: confirmedPlan.allocations as Record<ExpenseCategory, number>,
+      spentByCategory: sumSpendByCategory(monthTransactions),
+    };
+  }
 
   return (
     <div className="flex flex-col flex-1">
@@ -69,7 +88,7 @@ export default async function Home() {
 
           <section className="flex flex-col gap-3">
             <h2 className="text-lg font-black text-navy">{targetMonthNum}월 맞춤 예산안</h2>
-            <BudgetPlanner targetMonth={targetMonth} />
+            <BudgetPlanner targetMonth={targetMonth} confirmedProgress={confirmedProgress} />
           </section>
 
           <section className="flex flex-col gap-3">

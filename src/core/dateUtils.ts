@@ -21,3 +21,9 @@ export function nextMonthKey(monthKey: string): string {
 export function toMonthKey(date: Date): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
+
+/** "YYYY-MM" 키가 가리키는 달의 1일 00:00 UTC Date를 반환한다. */
+export function monthStart(monthKey: string): Date {
+  const [year, month] = monthKey.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, 1));
+}

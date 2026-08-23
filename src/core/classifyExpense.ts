@@ -42,6 +42,18 @@ export function classifyExpenseTransactions(transactions: ExpenseTransaction[]):
     .map((tx) => ({ txId: tx.id, category: matchMerchantCategory(tx.counterparty) }));
 }
 
+/** 지출 거래를 카테고리별로 합산한다(양수, 원). 월평균 계산과 이번 달 실사용액 계산이 이 집계를 공유한다. */
+export function sumSpendByCategory(transactions: ExpenseTransaction[]): Record<ExpenseCategory, number> {
+  const classified = classifyExpenseTransactions(transactions);
+  const byTxId = new Map(transactions.map((tx) => [tx.id, tx]));
+
+  const totals: Record<ExpenseCategory, number> = { 식비: 0, 카페: 0, 쇼핑: 0, 교통: 0, 기타: 0 };
+  for (const c of classified) {
+    totals[c.category] += Math.abs(byTxId.get(c.txId)!.amount);
+  }
+  return totals;
+}
+
 /**
  * 카테고리별 "월평균" 지출액(양수, 원)을 계산한다. budget.ts의 categoryHistoricalSpend 입력을 만든다.
  * monthCount는 transactions가 걸쳐 있는 개월 수 — 호출자가 계산해서 넘긴다.
@@ -50,13 +62,7 @@ export function averageMonthlySpendByCategory(
   transactions: ExpenseTransaction[],
   monthCount: number,
 ): Record<ExpenseCategory, number> {
-  const classified = classifyExpenseTransactions(transactions);
-  const byTxId = new Map(transactions.map((tx) => [tx.id, tx]));
-
-  const totals: Record<ExpenseCategory, number> = { 식비: 0, 카페: 0, 쇼핑: 0, 교통: 0, 기타: 0 };
-  for (const c of classified) {
-    totals[c.category] += Math.abs(byTxId.get(c.txId)!.amount);
-  }
+  const totals = sumSpendByCategory(transactions);
 
   const result = {} as Record<ExpenseCategory, number>;
   for (const category of Object.keys(totals) as ExpenseCategory[]) {

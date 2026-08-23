@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ExpenseCategory } from "@/config";
 import { formatWon, formatWonThousand } from "@/lib/format";
 
@@ -25,8 +26,16 @@ type DeficitResult = {
 
 type DraftResponse = DraftPlan | DeficitResult;
 
+export type ConfirmedProgress = {
+  baseIncome: number;
+  saving: number;
+  allocations: Record<ExpenseCategory, number>;
+  spentByCategory: Record<ExpenseCategory, number>;
+};
+
 type Props = {
   targetMonth: string;
+  confirmedProgress: ConfirmedProgress | null;
 };
 
 /**
@@ -34,12 +43,16 @@ type Props = {
  * 이미 만들어진 POST /api/budget/draft, /confirm을 그대로 fetch한다.
  * aiAllocations(원안)는 화면에서 절대 수정하지 않고, 사용자가 조정한 값만
  * 별도 state(userAllocations)로 들고 있다가 확정 시 보낸다(절대 규칙 5번).
+ *
+ * targetMonth는 항상 "이번 달"이다. confirmedProgress가 있으면(=이번 달 예산을 이미
+ * 확정해뒀으면) 새로 초안을 짜지 않고 진행률 뷰를 바로 보여준다.
  */
-export function BudgetPlanner({ targetMonth }: Props) {
+export function BudgetPlanner({ targetMonth, confirmedProgress }: Props) {
+  const router = useRouter();
   const [fixedExpenses, setFixedExpenses] = useState(0);
   const [plan, setPlan] = useState<DraftResponse | null>(null);
   const [userAllocations, setUserAllocations] = useState<Record<ExpenseCategory, number> | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!confirmedProgress);
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
@@ -60,6 +73,7 @@ export function BudgetPlanner({ targetMonth }: Props) {
   }
 
   useEffect(() => {
+    if (confirmedProgress) return;
     fetchDraft(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetMonth]);
@@ -74,6 +88,11 @@ export function BudgetPlanner({ targetMonth }: Props) {
     });
     setConfirming(false);
     setConfirmed(true);
+    router.refresh();
+  }
+
+  if (confirmedProgress) {
+    return <BudgetProgressView progress={confirmedProgress} />;
   }
 
   if (loading) {
@@ -152,6 +171,48 @@ export function BudgetPlanner({ targetMonth }: Props) {
       </button>
 
       {confirmed && <p className="text-sm text-cobalt">예산이 확정됐어요. 다음 예산 수립 때 이 조정이 조금씩 반영돼요.</p>}
+    </div>
+  );
+}
+
+function BudgetProgressView({ progress }: { progress: ConfirmedProgress }) {
+  return (
+    <div className="flex flex-col gap-5 rounded-2xl bg-white p-6 shadow-sm">
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="rounded-xl bg-ice p-4">
+          <p className="text-navy/50">확정 기준선</p>
+          <p className="font-black text-navy">{formatWonThousand(progress.baseIncome)}</p>
+        </div>
+        <div className="rounded-xl bg-ice p-4">
+          <p className="text-navy/50">저축</p>
+          <p className="font-black text-navy">{formatWon(progress.saving)}</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {CATEGORIES.map((category) => {
+          const confirmedAmount = progress.allocations[category] ?? 0;
+          const spent = progress.spentByCategory[category] ?? 0;
+          const pct = confirmedAmount > 0 ? (spent / confirmedAmount) * 100 : 0;
+          const over = pct > 100;
+          return (
+            <div key={category}>
+              <div className="mb-1 flex items-center justify-between text-sm">
+                <span className="font-medium text-navy">
+                  {category} · {formatWon(spent)}
+                </span>
+                <span className="text-navy/70">{formatWon(confirmedAmount)}</span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-ice">
+                <div
+                  className={`h-2 rounded-full ${over ? "bg-red-400" : "bg-cobalt"}`}
+                  style={{ width: `${Math.min(pct, 100)}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
