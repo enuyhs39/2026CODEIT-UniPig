@@ -116,7 +116,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
         <table className="w-full min-w-[420px] table-fixed border-collapse text-[11.5px]">
           <colgroup>
             <col className="w-10" />
-            <col className="w-16" />
+            <col className="w-20" />
             <col className="w-16" />
             <col />
             <col className="w-20" />
@@ -159,7 +159,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
                       </button>
                     </form>
                   </td>
-                  <td className="truncate px-1.5 py-2 font-mono text-[11px] text-muted-foreground">
+                  <td className="whitespace-nowrap px-1.5 py-2 font-mono text-[11px] text-muted-foreground">
                     {formatDate(entry.date)}
                   </td>
                   <td className="px-1.5 py-2">
@@ -172,14 +172,20 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
                       {entry.category.label}
                     </span>
                   </td>
-                  <td className="truncate px-1.5 py-2">{entry.description}</td>
-                  <td
-                    className={cn(
-                      "truncate px-1.5 py-2 text-right font-mono font-semibold",
-                      entry.type === "EXPENSE" ? "text-danger" : "text-success",
-                    )}
-                  >
-                    {entry.type === "EXPENSE" ? "-" : "+"}
+                  <td className="px-1.5 py-2">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={cn(
+                          "flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold leading-none text-white",
+                          entry.type === "EXPENSE" ? "bg-danger" : "bg-success",
+                        )}
+                      >
+                        {entry.type === "EXPENSE" ? "−" : "+"}
+                      </span>
+                      <span className="truncate">{entry.description}</span>
+                    </div>
+                  </td>
+                  <td className="truncate px-1.5 py-2 text-right font-mono font-semibold">
                     {formatWon(entry.amount)}
                   </td>
                   <td className="whitespace-nowrap px-1.5 py-2 text-right">
