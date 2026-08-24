@@ -28,9 +28,9 @@ enum BudgetStatus {
 
 enum FixedExpenseCategory {
   TRANSPORT
-  RENT
-  PHONE
   SUBSCRIPTION
+  UTILITIES
+  OTHER
 }
 
 /// 원본 입출금 내역. 금액은 입금+/출금- 정수(원).

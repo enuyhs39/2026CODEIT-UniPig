@@ -18,9 +18,9 @@ import { FixedExpenseCategory } from "@/generated/prisma/client";
 const onboardingSchema = z.object({
   fixedExpenses: z.object({
     TRANSPORT: z.number().min(0),
-    RENT: z.number().min(0),
-    PHONE: z.number().min(0),
     SUBSCRIPTION: z.number().min(0),
+    UTILITIES: z.number().min(0),
+    OTHER: z.number().min(0),
   }),
   savingRate: z.number().min(0).max(1),
   csv: z.string().min(1),

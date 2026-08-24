@@ -2,10 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { ExpenseCategory } from "@/config";
+import {
+  FIXED_EXPENSE_CATEGORY_LABEL,
+  FIXED_EXPENSE_CATEGORY_ORDER,
+  type ExpenseCategory,
+  type FixedExpenseCategory,
+} from "@/config";
 import { formatWon, formatWonThousand } from "@/lib/format";
 
-const CATEGORIES: ExpenseCategory[] = ["식비", "카페", "쇼핑", "교통", "기타"];
+const CATEGORIES: ExpenseCategory[] = ["식비", "쇼핑", "문화/여가", "교육/자기계발", "생필품/경조사", "기타"];
+
+function zeroFixedExpenses(): Record<FixedExpenseCategory, number> {
+  return Object.fromEntries(FIXED_EXPENSE_CATEGORY_ORDER.map((c) => [c, 0])) as Record<FixedExpenseCategory, number>;
+}
+
+function sumFixedExpenses(byCategory: Record<FixedExpenseCategory, number>): number {
+  return FIXED_EXPENSE_CATEGORY_ORDER.reduce((sum, c) => sum + byCategory[c], 0);
+}
 
 type DraftPlan = {
   id: string;
@@ -49,7 +62,8 @@ type Props = {
  */
 export function BudgetPlanner({ targetMonth, confirmedProgress }: Props) {
   const router = useRouter();
-  const [fixedExpenses, setFixedExpenses] = useState(0);
+  const [fixedExpensesByCategory, setFixedExpensesByCategory] =
+    useState<Record<FixedExpenseCategory, number>>(zeroFixedExpenses());
   const [plan, setPlan] = useState<DraftResponse | null>(null);
   const [userAllocations, setUserAllocations] = useState<Record<ExpenseCategory, number> | null>(null);
   const [loading, setLoading] = useState(!confirmedProgress);
@@ -75,17 +89,32 @@ export function BudgetPlanner({ targetMonth, confirmedProgress }: Props) {
   useEffect(() => {
     if (confirmedProgress) return;
 
-    // 온보딩/마이페이지에서 저장한 카테고리별 고정지출 합계를 기본값으로 불러온다 — 매번 직접 입력하지 않아도 되게.
-    // 기존 수동 입력(FixedExpensesInput, "적용" 버튼)은 그대로 둬서 override는 계속 가능하다.
+    // 온보딩/마이페이지에서 저장한 카테고리별 고정지출을 기본값으로 불러온다 — 매번 직접 입력하지 않아도 되게.
+    // 기존 수동 입력(FixedExpensesBreakdown, "적용" 버튼)은 그대로 둬서 override는 계속 가능하다.
     fetch("/api/preferences/fixed-expenses")
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: Record<string, number> | null) => {
-        const sum = data ? Object.values(data).reduce((a, b) => a + b, 0) : 0;
-        setFixedExpenses(sum);
-        fetchDraft(sum);
+      .then((data: Record<FixedExpenseCategory, number> | null) => {
+        const byCategory = data ?? zeroFixedExpenses();
+        setFixedExpensesByCategory(byCategory);
+        fetchDraft(sumFixedExpenses(byCategory));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetMonth]);
+
+  async function applyFixedExpenses() {
+    // 카테고리별로 upsert하는 게 계약이라(PATCH /api/preferences/fixed-expenses) 4건을 병렬로 저장한 뒤
+    // 합계로 초안을 다시 계산한다 — 마이페이지에서 수정해도 같은 데이터를 보게 된다.
+    await Promise.all(
+      FIXED_EXPENSE_CATEGORY_ORDER.map((category) =>
+        fetch("/api/preferences/fixed-expenses", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ category, amount: fixedExpensesByCategory[category] }),
+        }),
+      ),
+    );
+    fetchDraft(sumFixedExpenses(fixedExpensesByCategory));
+  }
 
   async function handleConfirm() {
     if (plan?.status !== "DRAFT" || !userAllocations) return;
@@ -119,7 +148,13 @@ export function BudgetPlanner({ targetMonth, confirmedProgress }: Props) {
           예상 수입({formatWon(plan.baseIncome)})이 고정지출({formatWon(plan.fixedExpenses)})보다{" "}
           <strong className="font-extrabold">{formatWon(plan.shortfall)}</strong> 부족해요. 고정지출을 줄이거나 수입원을 늘려야 해요.
         </p>
-        <FixedExpensesInput value={fixedExpenses} onChange={setFixedExpenses} onApply={() => fetchDraft(fixedExpenses)} />
+        <FixedExpensesBreakdown
+          value={fixedExpensesByCategory}
+          onChange={(category, amount) =>
+            setFixedExpensesByCategory((prev) => ({ ...prev, [category]: amount }))
+          }
+          onApply={applyFixedExpenses}
+        />
       </div>
     );
   }
@@ -131,7 +166,13 @@ export function BudgetPlanner({ targetMonth, confirmedProgress }: Props) {
 
   return (
     <div className="flex flex-col gap-5 rounded-2xl bg-white p-6 shadow-sm">
-      <FixedExpensesInput value={fixedExpenses} onChange={setFixedExpenses} onApply={() => fetchDraft(fixedExpenses)} />
+      <FixedExpensesBreakdown
+        value={fixedExpensesByCategory}
+        onChange={(category, amount) =>
+          setFixedExpensesByCategory((prev) => ({ ...prev, [category]: amount }))
+        }
+        onApply={applyFixedExpenses}
+      />
 
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div className="rounded-xl bg-ice p-4">
@@ -226,30 +267,39 @@ function BudgetProgressView({ progress }: { progress: ConfirmedProgress }) {
   );
 }
 
-function FixedExpensesInput({
+function FixedExpensesBreakdown({
   value,
   onChange,
   onApply,
 }: {
-  value: number;
-  onChange: (v: number) => void;
+  value: Record<FixedExpenseCategory, number>;
+  onChange: (category: FixedExpenseCategory, amount: number) => void;
   onApply: () => void;
 }) {
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <label className="text-navy/70" htmlFor="fixedExpenses">
-        고정지출(월세·통신비 등)
-      </label>
-      <input
-        id="fixedExpenses"
-        type="number"
-        min={0}
-        step={1_000}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-32 rounded-xl bg-ice px-3 py-1.5 text-navy"
-      />
-      <button type="button" onClick={onApply} className="rounded-full bg-ice px-3 py-1.5 font-medium text-navy">
+    <div className="flex flex-col gap-2 text-sm">
+      <p className="text-navy/70">고정지출</p>
+      {FIXED_EXPENSE_CATEGORY_ORDER.map((category) => (
+        <div key={category} className="flex items-center justify-between gap-3">
+          <label className="text-navy/70" htmlFor={`fixedExpense-${category}`}>
+            {FIXED_EXPENSE_CATEGORY_LABEL[category]}
+          </label>
+          <input
+            id={`fixedExpense-${category}`}
+            type="number"
+            min={0}
+            step={1_000}
+            value={value[category]}
+            onChange={(e) => onChange(category, Number(e.target.value))}
+            className="w-32 rounded-xl bg-ice px-3 py-1.5 text-right text-navy"
+          />
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={onApply}
+        className="self-start rounded-full bg-ice px-3 py-1.5 font-medium text-navy"
+      >
         적용
       </button>
     </div>

@@ -33,21 +33,22 @@ export const MONTE_CARLO_SIMULATIONS = 10_000;
 export const HISTOGRAM_BINS = 20;
 
 /** 예산 배분에 쓰는 지출 카테고리. */
-export type ExpenseCategory = "식비" | "카페" | "쇼핑" | "교통" | "기타";
+export type ExpenseCategory = "식비" | "쇼핑" | "문화/여가" | "교육/자기계발" | "생필품/경조사" | "기타";
 
 /** 사용자 가중치가 아직 없을 때(첫 예산 초안, 온보딩 직후)의 기본 가중치 — 전 카테고리 동등. */
 export const DEFAULT_BUDGET_WEIGHTS: Record<ExpenseCategory, number> = {
   식비: 1,
-  카페: 1,
   쇼핑: 1,
-  교통: 1,
+  "문화/여가": 1,
+  "교육/자기계발": 1,
+  "생필품/경조사": 1,
   기타: 1,
 };
 
 /** 카테고리별 최소 생계선(원). 예산 배분이 이 아래로 내려가지 않도록 보장한다. */
 export const MIN_SUBSISTENCE: Partial<Record<ExpenseCategory, number>> = {
   식비: 200_000,
-  교통: 30_000,
+  "생필품/경조사": 30_000,
 } as const;
 
 /**
@@ -59,17 +60,23 @@ export const MERCHANT_CATEGORY_MAP: Record<string, ExpenseCategory> = {
   교촌치킨: "식비",
   맘스터치: "식비",
   한솥도시락: "식비",
-  스타벅스: "카페",
-  이디야커피: "카페",
-  메가커피: "카페",
-  컴포즈커피: "카페",
+  스타벅스: "식비",
+  이디야커피: "식비",
+  메가커피: "식비",
+  컴포즈커피: "식비",
   올리브영: "쇼핑",
   무신사: "쇼핑",
   쿠팡: "쇼핑",
   다이소: "쇼핑",
-  서울교통공사: "교통",
-  카카오T: "교통",
-  티머니: "교통",
+  CGV: "문화/여가",
+  노래방코인: "문화/여가",
+  PC방: "문화/여가",
+  교보문고: "교육/자기계발",
+  인프런: "교육/자기계발",
+  스터디카페: "교육/자기계발",
+  서울교통공사: "생필품/경조사",
+  카카오T: "생필품/경조사",
+  티머니: "생필품/경조사",
   GS25: "기타",
   CU편의점: "기타",
   약국: "기타",
@@ -84,15 +91,21 @@ export const BUDGET_ROUNDING_UNIT = 1_000;
 /** 기본 저축률. UserPreference.savingRate 초기값과 동일해야 한다. */
 export const DEFAULT_SAVING_RATE = 0.1;
 
-/** 온보딩에서 입력받는 카테고리별 고정지출 라벨. */
-export const FIXED_EXPENSE_CATEGORY_LABEL: Record<
-  "TRANSPORT" | "RENT" | "PHONE" | "SUBSCRIPTION",
-  string
-> = {
+/** 카테고리별 고정지출 라벨. 온보딩과 예산 화면(BudgetPlanner)이 공유하는 단일 소스. */
+export type FixedExpenseCategory = "TRANSPORT" | "SUBSCRIPTION" | "UTILITIES" | "OTHER";
+
+export const FIXED_EXPENSE_CATEGORY_ORDER: FixedExpenseCategory[] = [
+  "TRANSPORT",
+  "SUBSCRIPTION",
+  "UTILITIES",
+  "OTHER",
+];
+
+export const FIXED_EXPENSE_CATEGORY_LABEL: Record<FixedExpenseCategory, string> = {
   TRANSPORT: "교통비",
-  RENT: "월세",
-  PHONE: "통신비",
-  SUBSCRIPTION: "구독비용",
+  SUBSCRIPTION: "정기구독",
+  UTILITIES: "관리·통신비",
+  OTHER: "기타",
 };
 
 /** 소득원 생존 확률 계산 파라미터. ratio = elapsed / periodDays. */

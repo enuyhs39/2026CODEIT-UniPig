@@ -70,9 +70,10 @@ const CASHBACK_SOURCES = [
 // 가맹점 목록은 config.ts의 MERCHANT_CATEGORY_MAP이 단일 소스 — classifyExpense.ts(T8)와 공유.
 const EXPENSE_RANGE_BY_CATEGORY: Record<ExpenseCategory, readonly [number, number]> = {
   식비: [5, 15],
-  카페: [3, 8],
   쇼핑: [10, 100],
-  교통: [1, 3],
+  "문화/여가": [10, 30],
+  "교육/자기계발": [10, 50],
+  "생필품/경조사": [3, 50],
   기타: [1, 50],
 };
 
@@ -155,7 +156,7 @@ function generateTransactions(rng: () => number, now: Date): TxRow[] {
       });
     }
 
-    // 지출 — 식비/카페/쇼핑/교통/기타, 월 40~80건
+    // 지출 — 식비/쇼핑/문화·여가/교육·자기계발/생필품·경조사/기타, 월 40~80건
     const expenseCount = randInt(rng, 40, 80);
     for (let e = 0; e < expenseCount; e++) {
       const category = pick(rng, EXPENSE_CATEGORIES);
