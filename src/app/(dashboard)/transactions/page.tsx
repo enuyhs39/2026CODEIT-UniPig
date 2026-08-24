@@ -113,15 +113,23 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
       )}
 
       <div className="overflow-x-auto rounded-2xl border border-card-border bg-card">
-        <table className="w-full min-w-[560px] border-collapse text-[12.5px]">
+        <table className="w-full min-w-[420px] table-fixed border-collapse text-[11.5px]">
+          <colgroup>
+            <col className="w-10" />
+            <col className="w-16" />
+            <col className="w-16" />
+            <col />
+            <col className="w-20" />
+            <col className="w-9" />
+          </colgroup>
           <thead>
-            <tr className="border-b border-card-border text-left text-[11px] font-bold text-muted-foreground">
-              <th className="px-3 py-2.5 text-center">완료</th>
-              <th className="px-3 py-2.5">날짜</th>
-              <th className="px-3 py-2.5">구분</th>
-              <th className="px-3 py-2.5">내역</th>
-              <th className="px-3 py-2.5 text-right">금액</th>
-              <th className="px-3 py-2.5" />
+            <tr className="border-b border-card-border text-left text-[10.5px] font-bold text-muted-foreground">
+              <th className="px-1.5 py-2 text-center">완료</th>
+              <th className="px-1.5 py-2">날짜</th>
+              <th className="px-1.5 py-2">구분</th>
+              <th className="px-1.5 py-2">내역</th>
+              <th className="px-1.5 py-2 text-right">금액</th>
+              <th className="px-1.5 py-2" />
             </tr>
           </thead>
           <tbody>
@@ -129,7 +137,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
               const status = STATUS_LABEL[entry.type][entry.isDone ? "done" : "pending"];
               return (
                 <tr key={entry.id} className="border-b border-card-border last:border-b-0">
-                  <td className="px-3 py-2.5 text-center">
+                  <td className="px-1.5 py-2 text-center">
                     <form action={toggleLedgerEntryDone}>
                       <input type="hidden" name="id" value={entry.id} />
                       <input type="hidden" name="isDone" value={String(entry.isDone)} />
@@ -137,49 +145,49 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
                         type="submit"
                         title={status}
                         className={cn(
-                          "flex h-5 w-5 items-center justify-center rounded-md border transition-colors",
+                          "flex h-[18px] w-[18px] items-center justify-center rounded-md border transition-colors",
                           entry.isDone
                             ? "border-accent bg-accent"
                             : "border-card-border bg-background",
                         )}
                       >
                         {entry.isDone && (
-                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="white" strokeWidth="3">
+                          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="white" strokeWidth="3">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         )}
                       </button>
                     </form>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-2.5 font-mono text-[12px] text-muted-foreground">
+                  <td className="truncate px-1.5 py-2 font-mono text-[11px] text-muted-foreground">
                     {formatDate(entry.date)}
                   </td>
-                  <td className="px-3 py-2.5">
+                  <td className="px-1.5 py-2">
                     <span
                       className={cn(
-                        "rounded-full px-2 py-1 text-[11px] font-semibold",
+                        "inline-block truncate rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
                         PALETTE_BADGE_CLASSES[entry.category.color],
                       )}
                     >
                       {entry.category.label}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5">{entry.description}</td>
+                  <td className="truncate px-1.5 py-2">{entry.description}</td>
                   <td
                     className={cn(
-                      "whitespace-nowrap px-3 py-2.5 text-right font-mono font-semibold",
+                      "truncate px-1.5 py-2 text-right font-mono font-semibold",
                       entry.type === "EXPENSE" ? "text-danger" : "text-success",
                     )}
                   >
                     {entry.type === "EXPENSE" ? "-" : "+"}
                     {formatWon(entry.amount)}
                   </td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="whitespace-nowrap px-1.5 py-2 text-right">
                     <form action={deleteLedgerEntry}>
                       <input type="hidden" name="id" value={entry.id} />
                       <button
                         type="submit"
-                        className="text-[11px] font-semibold text-muted-foreground transition-opacity hover:opacity-70"
+                        className="text-[10px] font-semibold text-muted-foreground transition-opacity hover:opacity-70"
                       >
                         삭제
                       </button>
