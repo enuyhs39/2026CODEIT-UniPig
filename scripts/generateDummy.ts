@@ -68,13 +68,15 @@ const CASHBACK_SOURCES = [
 ] as const;
 
 // 가맹점 목록은 config.ts의 MERCHANT_CATEGORY_MAP이 단일 소스 — classifyExpense.ts(T8)와 공유.
+// 각 카테고리 지출 습관이 예산(수입 P25 기준으로 계산됨)과 그럴듯하게 맞아떨어지도록 튜닝된 값 —
+// 너무 크면 전 카테고리가 항상 초과로 나오고, 너무 작으면 항상 여유로만 보여서 데모 효과가 없다.
 const EXPENSE_RANGE_BY_CATEGORY: Record<ExpenseCategory, readonly [number, number]> = {
   식비: [5, 15],
-  쇼핑: [10, 100],
-  "문화/여가": [10, 30],
-  "교육/자기계발": [10, 50],
-  "생필품/경조사": [3, 50],
-  기타: [1, 50],
+  쇼핑: [1, 12],
+  "문화/여가": [1, 2],
+  "교육/자기계발": [1, 4],
+  "생필품/경조사": [1, 7],
+  기타: [1, 5],
 };
 
 const MERCHANTS_BY_CATEGORY = Object.entries(MERCHANT_CATEGORY_MAP).reduce(
@@ -233,6 +235,7 @@ function printSummary(rows: TxRow[], now: Date): void {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const seed = args.seed ? Number(args.seed) : 42;
+  const csvOnly = "csv-only" in args;
   console.log(`시드: ${seed}`);
 
   const now = new Date();
@@ -242,8 +245,12 @@ async function main() {
   const csvPath = writeCsv(rows);
   console.log(`CSV 저장: ${csvPath}`);
 
-  await seedDb(rows);
-  console.log(`DB 시드 완료 (userId=${DEMO_USER_ID})`);
+  if (csvOnly) {
+    console.log("--csv-only 지정됨: DB 시드는 건너뜀");
+  } else {
+    await seedDb(rows);
+    console.log(`DB 시드 완료 (userId=${DEMO_USER_ID})`);
+  }
 
   printSummary(rows, now);
 
