@@ -24,7 +24,7 @@ function formatWon(amount: number): string {
 }
 
 function formatDate(date: Date): string {
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function toDateInputValue(date: Date): string {
@@ -176,7 +176,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
                     <div className="flex items-center gap-1.5">
                       <span
                         className={cn(
-                          "flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold leading-none text-white",
+                          "flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full text-[8px] font-bold leading-none text-white",
                           entry.type === "EXPENSE" ? "bg-danger" : "bg-success",
                         )}
                       >
