@@ -92,12 +92,102 @@ model BudgetPlan {
 
 /// 사용자별 카테고리 가중치(피드백 학습 대상)와 저축률.
 model UserPreference {
-  id         String @id @default(cuid())
-  userId     String @unique @map("user_id")
+  id         String  @id @default(cuid())
+  userId     String  @unique @map("user_id")
+  nickname   String? @map("nickname")
   weights    Json
-  savingRate Float  @default(0.10) @map("saving_rate")
+  savingRate Float   @default(0.10) @map("saving_rate")
 
   @@map("user_preferences")
+}
+
+enum PiggyBankItemStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+enum PiggyBankCategory {
+  PARKING
+  SAVINGS
+  STOCK
+  OTHER
+}
+
+/// 저금통(통장/주식/적금 등) 항목. 저금통 페이지에서 카드로 표시.
+model PiggyBankItem {
+  id            String              @id @default(cuid())
+  userId        String              @map("user_id")
+  title         String
+  category      PiggyBankCategory   @default(OTHER)
+  targetAmount  Int                 @map("target_amount")
+  currentAmount Int                 @default(0) @map("current_amount")
+  startDate     DateTime?           @map("start_date")
+  targetDate    DateTime?           @map("target_date")
+  status        PiggyBankItemStatus @default(PENDING)
+
+  @@map("piggybank_items")
+}
+
+enum LedgerEntryType {
+  EXPENSE
+  INCOME
+}
+
+enum PaletteColor {
+  DEFAULT
+  GRAY
+  BROWN
+  ORANGE
+  YELLOW
+  GREEN
+  BLUE
+  PURPLE
+  PINK
+  RED
+}
+
+/// AI피그 지출 예산 그룹(현희 쪽 고정 5분류). LedgerCategory가 여기 매핑돼야 AI 계산에서 누락되지 않는다.
+enum ExpenseCategory {
+  FOOD
+  CAFE
+  SHOPPING
+  TRANSPORT
+  OTHER
+}
+
+/// 지출/수입 "구분" 옵션 목록. 마이페이지 설정에서 사용자가 직접 추가·수정·삭제한다.
+/// type에 따라 expenseGroup(지출) 또는 incomeGroup(수입) 중 하나만 채워진다 — AI피그 예산 계산이 참조하는 고정 그룹.
+model LedgerCategory {
+  id           String          @id @default(cuid())
+  userId       String          @map("user_id")
+  label        String
+  color        PaletteColor    @default(DEFAULT)
+  sortOrder    Int             @default(0) @map("sort_order")
+  type         LedgerEntryType
+  expenseGroup ExpenseCategory? @map("expense_group")
+  incomeGroup  IncomeCategory?  @map("income_group")
+
+  entries LedgerEntry[]
+
+  @@unique([userId, label])
+  @@map("ledger_categories")
+}
+
+/// 사용자가 직접 기입하는 월별 지출/수입 계획표. 은행 자동분류(Transaction/IncomeEvent)와는 별개.
+model LedgerEntry {
+  id          String          @id @default(cuid())
+  userId      String          @map("user_id")
+  date        DateTime
+  type        LedgerEntryType
+  categoryId  String          @map("category_id")
+  description String
+  amount      Int
+  isDone      Boolean         @default(false) @map("is_done")
+
+  category LedgerCategory @relation(fields: [categoryId], references: [id])
+
+  @@map("ledger_entries")
 }
 
 /// 사용자가 "종료 확정"한 소득원. 계산으로는 알 수 없는 사용자의 판단이라 저장이 필요하다.
