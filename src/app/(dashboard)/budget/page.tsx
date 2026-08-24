@@ -84,7 +84,7 @@ async function BudgetContent({ userId }: { userId: string }) {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-black text-navy">{targetMonthNum}월 맞춤 예산안</h2>
         <div className="rounded-2xl border border-cobalt/10 bg-white p-5 text-navy shadow-sm">
-          <p className="text-sm font-extrabold">AI피그는 이렇게 예산을 만들어요</p>
+          <p className="text-sm font-extrabold">예산관리는 이렇게 예산을 만들어요</p>
           <div className="mt-3 grid gap-2 text-xs leading-relaxed text-navy/60 sm:grid-cols-3">
             <p className="rounded-xl bg-ice p-3">
               <strong className="mb-1 block text-cobalt">1. 예상 수입 계산</strong>

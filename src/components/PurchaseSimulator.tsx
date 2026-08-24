@@ -31,7 +31,7 @@ export function PurchaseSimulator({ progress }: { progress: SimulateBudgetProgre
       </p>
 
       <div className="rounded-xl border border-cobalt/15 bg-cobalt/5 px-4 py-3 text-[12.5px] text-muted-foreground">
-        이 시뮬레이션은 <strong className="font-semibold text-foreground">AI피그에서 확정한 이번 달 카테고리별 예산</strong>을
+        이 시뮬레이션은 <strong className="font-semibold text-foreground">예산관리에서 확정한 이번 달 카테고리별 예산</strong>을
         기준으로 계산해요.
       </div>
 

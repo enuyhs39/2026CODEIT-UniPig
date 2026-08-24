@@ -14,10 +14,10 @@ export default async function SimulationPage() {
       <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-card-border px-5 py-12 text-center text-muted-foreground">
         <h1 className="text-sm font-bold text-foreground">구매 시뮬레이션</h1>
         <p className="text-[12.5px]">
-          이번 달 확정된 예산이 없어서 시뮬레이션할 수 없어요. AI피그에서 예산을 먼저 확정해주세요.
+          이번 달 확정된 예산이 없어서 시뮬레이션할 수 없어요. 예산관리에서 예산을 먼저 확정해주세요.
         </p>
         <Link href="/budget" className="mt-2 rounded-full bg-cobalt px-5 py-2.5 text-[12.5px] font-semibold text-white">
-          AI피그에서 예산 설정
+          예산관리에서 예산 설정
         </Link>
       </div>
     );

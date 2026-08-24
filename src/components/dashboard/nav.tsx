@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { href: "/", label: "유니피그", icon: "/icons/nav-home.png" },
   { href: "/transactions", label: "지출/수입", icon: "/icons/nav-transactions.png" },
   { href: "/piggybank", label: "저금통", icon: "/icons/nav-piggybank.png" },
-  { href: "/budget", label: "AI피그", icon: "/icons/nav-budget.png" },
+  { href: "/budget", label: "예산관리", icon: "/icons/nav-budget.png" },
   { href: "/simulation", label: "구매 시뮬레이션", icon: "/icons/nav-simulation.png" },
 ] as const;
 
