@@ -52,10 +52,12 @@ export const MIN_SUBSISTENCE: Partial<Record<ExpenseCategory, number>> = {
 } as const;
 
 /**
- * 가맹점명 → 지출 카테고리. classifyExpense.ts(예산 카테고리별 과거평균지출 집계)와
- * generateDummy.ts(더미 지출 생성)가 공유하는 단일 소스 — 두 곳에 따로 유지하면 어긋난다.
+ * 지출 내역(rawDesc) 키워드 → 지출 카테고리. classify.ts의 수입 KEYWORDS와 같은 방식으로,
+ * rawDesc에 이 키워드가 포함되는지로 매칭한다(가맹점명이 아니라 거래 내역 텍스트 전체를 본다).
+ * classifyExpense.ts(예산 카테고리별 과거평균지출 집계)와 generateDummy.ts(더미 지출 생성)가
+ * 공유하는 단일 소스 — 두 곳에 따로 유지하면 어긋난다.
  */
-export const MERCHANT_CATEGORY_MAP: Record<string, ExpenseCategory> = {
+export const EXPENSE_CATEGORY_KEYWORDS: Record<string, ExpenseCategory> = {
   김밥천국: "식비",
   교촌치킨: "식비",
   맘스터치: "식비",
@@ -64,25 +66,45 @@ export const MERCHANT_CATEGORY_MAP: Record<string, ExpenseCategory> = {
   이디야커피: "식비",
   메가커피: "식비",
   컴포즈커피: "식비",
+  배달의민족: "식비",
+  쿠팡이츠: "식비",
+  요기요: "식비",
+  모임: "식비",
+  약속: "식비",
+  밥: "식비",
+  // "생일 선물"이 "생일"보다 먼저 매칭돼야 한다(rawDesc가 둘 다 포함) — 그래서 순서상 위에 둔다.
+  "생일 선물": "생필품/경조사",
+  생일: "식비",
   올리브영: "쇼핑",
   무신사: "쇼핑",
   쿠팡: "쇼핑",
   다이소: "쇼핑",
   CGV: "문화/여가",
+  영화관: "문화/여가",
+  콘서트: "문화/여가",
+  전시회: "문화/여가",
   노래방코인: "문화/여가",
   PC방: "문화/여가",
   교보문고: "교육/자기계발",
   인프런: "교육/자기계발",
   스터디카페: "교육/자기계발",
+  문구: "교육/자기계발",
   서울교통공사: "생필품/경조사",
   카카오T: "생필품/경조사",
   티머니: "생필품/경조사",
-  GS25: "기타",
-  CU편의점: "기타",
-  약국: "기타",
+  대중교통: "생필품/경조사",
+  GS25: "생필품/경조사",
+  CU편의점: "생필품/경조사",
+  편의점: "생필품/경조사",
+  약국: "생필품/경조사",
+  세탁: "생필품/경조사",
+  생필품: "생필품/경조사",
+  축의금: "생필품/경조사",
+  세제: "생필품/경조사",
+  휴지: "생필품/경조사",
 } as const;
 
-/** MERCHANT_CATEGORY_MAP에 없는 가맹점의 fallback 카테고리. */
+/** EXPENSE_CATEGORY_KEYWORDS에 매칭되는 키워드가 없을 때의 fallback 카테고리. */
 export const FALLBACK_EXPENSE_CATEGORY: ExpenseCategory = "기타";
 
 /** 예산 배분 금액 반올림 단위(원). 오차는 가장 큰 카테고리가 흡수한다. */

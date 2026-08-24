@@ -16,10 +16,10 @@ function tx(overrides: Partial<ExpenseTransaction> & { id: string }): ExpenseTra
 }
 
 describe("classifyExpenseTransactions", () => {
-  it("MERCHANT_CATEGORY_MAP에 있는 가맹점은 해당 카테고리로 분류한다", () => {
+  it("EXPENSE_CATEGORY_KEYWORDS에 있는 키워드가 rawDesc에 포함되면 해당 카테고리로 분류한다", () => {
     const result = classifyExpenseTransactions([
-      tx({ id: "t1", counterparty: "스타벅스", amount: -6_000 }),
-      tx({ id: "t2", counterparty: "서울교통공사", amount: -1_500 }),
+      tx({ id: "t1", rawDesc: "스타벅스 결제", amount: -6_000 }),
+      tx({ id: "t2", rawDesc: "서울교통공사 결제", amount: -1_500 }),
     ]);
     expect(result).toEqual([
       { txId: "t1", category: "식비" },
@@ -27,22 +27,22 @@ describe("classifyExpenseTransactions", () => {
     ]);
   });
 
-  it("가맹점명에 지점명이 붙어도 매칭한다 (부분 포함 매칭)", () => {
+  it("내역에 지점명 등 다른 텍스트가 붙어도 매칭한다 (부분 포함 매칭)", () => {
     const result = classifyExpenseTransactions([
-      tx({ id: "t1", counterparty: "스타벅스 강남점", amount: -6_000 }),
+      tx({ id: "t1", rawDesc: "스타벅스 강남점 결제", amount: -6_000 }),
     ]);
     expect(result[0].category).toBe("식비");
   });
 
-  it("매칭되지 않는 가맹점은 기타로 분류한다", () => {
+  it("매칭되는 키워드가 없으면 기타로 분류한다", () => {
     const result = classifyExpenseTransactions([
-      tx({ id: "t1", counterparty: "이름모를식당", amount: -10_000 }),
+      tx({ id: "t1", rawDesc: "이름모를식당 결제", amount: -10_000 }),
     ]);
     expect(result[0].category).toBe("기타");
   });
 
   it("입금(amount>=0) 거래는 무시한다", () => {
-    const result = classifyExpenseTransactions([tx({ id: "t1", counterparty: "엄마", amount: 400_000 })]);
+    const result = classifyExpenseTransactions([tx({ id: "t1", rawDesc: "엄마 용돈", amount: 400_000 })]);
     expect(result).toHaveLength(0);
   });
 });
@@ -51,9 +51,9 @@ describe("averageMonthlySpendByCategory", () => {
   it("카테고리별 총 지출을 monthCount로 나눈 월평균을 반환한다", () => {
     const result = averageMonthlySpendByCategory(
       [
-        tx({ id: "t1", counterparty: "스타벅스", amount: -6_000 }),
-        tx({ id: "t2", counterparty: "이디야커피", amount: -4_000 }),
-        tx({ id: "t3", counterparty: "서울교통공사", amount: -2_000 }),
+        tx({ id: "t1", rawDesc: "스타벅스 결제", amount: -6_000 }),
+        tx({ id: "t2", rawDesc: "이디야커피 결제", amount: -4_000 }),
+        tx({ id: "t3", rawDesc: "서울교통공사 결제", amount: -2_000 }),
       ],
       2,
     );
@@ -64,7 +64,7 @@ describe("averageMonthlySpendByCategory", () => {
 
   it("모든 ExpenseCategory 키를 항상 포함한다(지출이 0건인 카테고리도 0으로)", () => {
     const result = averageMonthlySpendByCategory(
-      [tx({ id: "t1", counterparty: "스타벅스", amount: -6_000 })],
+      [tx({ id: "t1", rawDesc: "스타벅스 결제", amount: -6_000 })],
       1,
     );
     expect(Object.keys(result).sort()).toEqual(

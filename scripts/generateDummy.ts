@@ -12,7 +12,7 @@ import "dotenv/config";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { mulberry32 } from "@/core/stats";
-import { MERCHANT_CATEGORY_MAP, SEASONAL_FACTORS, type ExpenseCategory } from "@/config";
+import { EXPENSE_CATEGORY_KEYWORDS, SEASONAL_FACTORS, type ExpenseCategory } from "@/config";
 import { prisma } from "@/lib/prisma";
 
 /** 로그인 없이 로컬에서 더미데이터를 돌릴 때 쓰는 테스트 유저 ID. 실제 앱은 인증된 userId를 쓴다. */
@@ -67,7 +67,7 @@ const CASHBACK_SOURCES = [
   { counterparty: "현대카드", desc: "현대카드 포인트 환급" },
 ] as const;
 
-// 가맹점 목록은 config.ts의 MERCHANT_CATEGORY_MAP이 단일 소스 — classifyExpense.ts(T8)와 공유.
+// 가맹점 목록은 config.ts의 EXPENSE_CATEGORY_KEYWORDS가 단일 소스 — classifyExpense.ts(T8)와 공유.
 // 각 카테고리 지출 습관이 예산(수입 P25 기준으로 계산됨)과 그럴듯하게 맞아떨어지도록 튜닝된 값 —
 // 너무 크면 전 카테고리가 항상 초과로 나오고, 너무 작으면 항상 여유로만 보여서 데모 효과가 없다.
 const EXPENSE_RANGE_BY_CATEGORY: Record<ExpenseCategory, readonly [number, number]> = {
@@ -79,7 +79,7 @@ const EXPENSE_RANGE_BY_CATEGORY: Record<ExpenseCategory, readonly [number, numbe
   기타: [1, 5],
 };
 
-const MERCHANTS_BY_CATEGORY = Object.entries(MERCHANT_CATEGORY_MAP).reduce(
+const MERCHANTS_BY_CATEGORY = Object.entries(EXPENSE_CATEGORY_KEYWORDS).reduce(
   (acc, [merchant, category]) => {
     (acc[category] ??= []).push(merchant);
     return acc;
@@ -87,9 +87,13 @@ const MERCHANTS_BY_CATEGORY = Object.entries(MERCHANT_CATEGORY_MAP).reduce(
   {} as Record<ExpenseCategory, string[]>,
 );
 
+// "기타"는 EXPENSE_CATEGORY_KEYWORDS에 아무 키워드도 없다(뭐든 안 걸리면 기타로 fallback되는 카테고리라서).
+// 데모용으로는 일부러 다른 카테고리 키워드와 안 겹치는 가맹점명을 써서 fallback 경로를 그대로 재현한다.
+const FALLBACK_DEMO_MERCHANTS = ["무인세탁소", "동네철물점", "만물잡화점"];
+
 const EXPENSE_CATEGORIES = (Object.keys(EXPENSE_RANGE_BY_CATEGORY) as ExpenseCategory[]).map((name) => ({
   name,
-  merchants: MERCHANTS_BY_CATEGORY[name],
+  merchants: MERCHANTS_BY_CATEGORY[name] ?? FALLBACK_DEMO_MERCHANTS,
   range: EXPENSE_RANGE_BY_CATEGORY[name],
 }));
 
@@ -188,9 +192,11 @@ function writeCsv(rows: TxRow[]): string {
   mkdirSync(outDir, { recursive: true });
   const outPath = path.join(outDir, "dummy-transactions.csv");
 
-  const header = "userId,occurredAt,amount,rawDesc,counterparty";
+  // userId는 parseCsv.ts가 애초에 무시하는 컬럼이라 CSV에는 안 넣는다(DB 시드는 seedDb가 rows를 직접 씀).
+  // 시간은 항상 00:00:00이라 의미가 없어 날짜만 남긴다.
+  const header = "occurredAt,amount,rawDesc,counterparty";
   const lines = rows.map((r) =>
-    [r.userId, r.occurredAt.toISOString(), r.amount, csvField(r.rawDesc), csvField(r.counterparty)].join(","),
+    [r.occurredAt.toISOString().slice(0, 10), r.amount, csvField(r.rawDesc), csvField(r.counterparty)].join(","),
   );
   writeFileSync(outPath, [header, ...lines].join("\n") + "\n", "utf-8");
   return outPath;
