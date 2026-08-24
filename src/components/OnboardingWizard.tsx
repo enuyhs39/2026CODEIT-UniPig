@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FIXED_EXPENSE_CATEGORY_LABEL } from "@/config";
-
-type FixedExpenseCategory = "TRANSPORT" | "RENT" | "PHONE" | "SUBSCRIPTION";
-const CATEGORY_ORDER: FixedExpenseCategory[] = ["TRANSPORT", "RENT", "PHONE", "SUBSCRIPTION"];
+import {
+  FIXED_EXPENSE_CATEGORY_LABEL,
+  FIXED_EXPENSE_CATEGORY_ORDER,
+  type FixedExpenseCategory,
+} from "@/config";
 
 const STEP_TITLES = ["고정지출", "목표 저축 비율", "거래내역 업로드"];
 
@@ -18,9 +19,9 @@ export function OnboardingWizard() {
   const [step, setStep] = useState(0);
   const [fixedExpenses, setFixedExpenses] = useState<Record<FixedExpenseCategory, number>>({
     TRANSPORT: 0,
-    RENT: 0,
-    PHONE: 0,
     SUBSCRIPTION: 0,
+    UTILITIES: 0,
+    OTHER: 0,
   });
   const [savingRatePercent, setSavingRatePercent] = useState(10);
   const [csvText, setCsvText] = useState<string | null>(null);
@@ -76,7 +77,7 @@ export function OnboardingWizard() {
       {step === 0 && (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-navy/60">매달 고정으로 나가는 지출을 카테고리별로 입력해주세요.</p>
-          {CATEGORY_ORDER.map((category) => (
+          {FIXED_EXPENSE_CATEGORY_ORDER.map((category) => (
             <div key={category} className="flex items-center justify-between gap-3">
               <label htmlFor={category} className="text-sm font-medium text-navy">
                 {FIXED_EXPENSE_CATEGORY_LABEL[category]}

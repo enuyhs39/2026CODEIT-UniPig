@@ -2,8 +2,8 @@
  * T3 더미데이터로 T8(budget.ts + feedback.ts) 파이프라인을 실행한다.
  * 1) T4~T6로 다음 달 수입 기준선(P25) 산출 + 지출 내역으로 카테고리별 과거평균지출 집계
  * 2) buildBudget으로 예산안(AI 원안) 수립
- * 3) 사용자가 매달 "카페"만 15만원으로 고쳐 확정한다고 가정하고 3회 반복
- * 4) 회차마다 AI 원안의 카페 배분이 사용자 목표(15만원)에 "조금씩만" 가까워지는지 확인
+ * 3) 사용자가 매달 "문화/여가"만 15만원으로 고쳐 확정한다고 가정하고 3회 반복
+ * 4) 회차마다 AI 원안의 문화/여가 배분이 사용자 목표(15만원)에 "조금씩만" 가까워지는지 확인
  *
  * 실행: npx tsx scripts/budgetDemo.ts
  */
@@ -30,8 +30,9 @@ const DEMO_USER_ID = "demo-user";
 
 const FORECAST_SEED = 42;
 const SIMULATION_ROUNDS = 3;
-const USER_CAFE_OVERRIDE = 150_000; // 사용자가 매 회차 "카페"만 15만원으로 고쳐 확정한다고 가정
-const CATEGORIES: ExpenseCategory[] = ["식비", "카페", "쇼핑", "교통", "기타"];
+const USER_LEISURE_OVERRIDE = 150_000; // 사용자가 매 회차 "문화/여가"만 15만원으로 고쳐 확정한다고 가정
+const LEISURE_CATEGORY: ExpenseCategory = "문화/여가";
+const CATEGORIES: ExpenseCategory[] = ["식비", "쇼핑", "문화/여가", "교육/자기계발", "생필품/경조사", "기타"];
 
 // 고정지출(월세 등)을 넣을 데이터 소스가 아직 없다(스키마에 모델 없음, T9/T10에서 사용자 입력으로 받을 예정).
 // 데모에서는 0으로 두고 이 사실을 그대로 출력에 남긴다 — 값을 지어내지 않는다.
@@ -61,9 +62,9 @@ function updateBacktestDocsWithAdjustmentTrend(gaps: number[]): void {
 
   const trend = gaps.map(fmtWon).join(" → ");
   const replacement =
-    `| 조정률 추이 | ${trend} (매달 "카페" 확정 시 목표와의 격차, ${gaps.length}회 시뮬레이션) | 감소 |\n\n` +
-    `**조정률 추이 상세**: 사용자가 매달 "카페" 배분을 15만원으로 고쳐 확정한다고 가정하고 ${gaps.length}회 반복한 결과, ` +
-    `AI 원안의 카페 배분이 목표치에 점점 가까워졌다(EMA α=${FEEDBACK_EMA_ALPHA}로 천천히 수렴). ` +
+    `| 조정률 추이 | ${trend} (매달 "문화/여가" 확정 시 목표와의 격차, ${gaps.length}회 시뮬레이션) | 감소 |\n\n` +
+    `**조정률 추이 상세**: 사용자가 매달 "문화/여가" 배분을 15만원으로 고쳐 확정한다고 가정하고 ${gaps.length}회 반복한 결과, ` +
+    `AI 원안의 문화/여가 배분이 목표치에 점점 가까워졌다(EMA α=${FEEDBACK_EMA_ALPHA}로 천천히 수렴). ` +
     `사용자가 매번 고쳐야 하는 격차가 ${trend}으로 회차마다 줄어드는 것으로 "조정률이 감소하는지"를 확인했다.\n\n` +
     "실행: `npx tsx scripts/backtestDemo.ts`(수입 예측 검증), `npx tsx scripts/budgetDemo.ts`(예산+피드백 학습 검증)\n";
 
@@ -109,10 +110,10 @@ async function main() {
 
   const rounds: {
     회차: number;
-    "AI원안(카페)": string;
-    "사용자확정(카페)": string;
+    "AI원안(문화/여가)": string;
+    "사용자확정(문화/여가)": string;
     "격차(목표-AI)": string;
-    "카페weight(확정후)": string;
+    "문화/여가weight(확정후)": string;
   }[] = [];
 
   for (let round = 1; round <= SIMULATION_ROUNDS; round++) {
@@ -135,7 +136,7 @@ async function main() {
     }
 
     const aiAllocations = result.allocations;
-    const userAllocations = { ...aiAllocations, 카페: USER_CAFE_OVERRIDE };
+    const userAllocations = { ...aiAllocations, [LEISURE_CATEGORY]: USER_LEISURE_OVERRIDE };
 
     weights = updateWeightsFromConfirmation(weights, aiAllocations, userAllocations) as Record<
       ExpenseCategory,
@@ -144,14 +145,14 @@ async function main() {
 
     rounds.push({
       회차: round,
-      "AI원안(카페)": fmtWon(aiAllocations.카페),
-      "사용자확정(카페)": fmtWon(USER_CAFE_OVERRIDE),
-      "격차(목표-AI)": fmtWon(USER_CAFE_OVERRIDE - aiAllocations.카페),
-      "카페weight(확정후)": weights.카페.toFixed(4),
+      "AI원안(문화/여가)": fmtWon(aiAllocations[LEISURE_CATEGORY]),
+      "사용자확정(문화/여가)": fmtWon(USER_LEISURE_OVERRIDE),
+      "격차(목표-AI)": fmtWon(USER_LEISURE_OVERRIDE - aiAllocations[LEISURE_CATEGORY]),
+      "문화/여가weight(확정후)": weights[LEISURE_CATEGORY].toFixed(4),
     });
   }
 
-  console.log(`\n${SIMULATION_ROUNDS}개월 시뮬레이션 (매달 카페를 ${fmtWon(USER_CAFE_OVERRIDE)}으로 확정):`);
+  console.log(`\n${SIMULATION_ROUNDS}개월 시뮬레이션 (매달 문화/여가를 ${fmtWon(USER_LEISURE_OVERRIDE)}으로 확정):`);
   console.table(rounds);
 
   const gaps = rounds.map((r) => Number(r["격차(목표-AI)"].replace(/[^\d-]/g, "")));

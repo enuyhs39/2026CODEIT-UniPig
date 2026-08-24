@@ -22,8 +22,8 @@ describe("classifyExpenseTransactions", () => {
       tx({ id: "t2", counterparty: "서울교통공사", amount: -1_500 }),
     ]);
     expect(result).toEqual([
-      { txId: "t1", category: "카페" },
-      { txId: "t2", category: "교통" },
+      { txId: "t1", category: "식비" },
+      { txId: "t2", category: "생필품/경조사" },
     ]);
   });
 
@@ -31,7 +31,7 @@ describe("classifyExpenseTransactions", () => {
     const result = classifyExpenseTransactions([
       tx({ id: "t1", counterparty: "스타벅스 강남점", amount: -6_000 }),
     ]);
-    expect(result[0].category).toBe("카페");
+    expect(result[0].category).toBe("식비");
   });
 
   it("매칭되지 않는 가맹점은 기타로 분류한다", () => {
@@ -57,9 +57,9 @@ describe("averageMonthlySpendByCategory", () => {
       ],
       2,
     );
-    expect(result["카페"]).toBe(5_000); // (6000+4000)/2
-    expect(result["교통"]).toBe(1_000); // 2000/2
-    expect(result["식비"]).toBe(0);
+    expect(result["식비"]).toBe(5_000); // (6000+4000)/2
+    expect(result["생필품/경조사"]).toBe(1_000); // 2000/2
+    expect(result["기타"]).toBe(0);
   });
 
   it("모든 ExpenseCategory 키를 항상 포함한다(지출이 0건인 카테고리도 0으로)", () => {
@@ -67,6 +67,8 @@ describe("averageMonthlySpendByCategory", () => {
       [tx({ id: "t1", counterparty: "스타벅스", amount: -6_000 })],
       1,
     );
-    expect(Object.keys(result).sort()).toEqual(["교통", "기타", "식비", "쇼핑", "카페"].sort());
+    expect(Object.keys(result).sort()).toEqual(
+      ["교육/자기계발", "기타", "문화/여가", "생필품/경조사", "쇼핑", "식비"].sort(),
+    );
   });
 });

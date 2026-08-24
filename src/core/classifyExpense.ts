@@ -1,5 +1,5 @@
 /**
- * 지출 거래를 예산 카테고리(식비/카페/쇼핑/교통/기타)로 분류한다.
+ * 지출 거래를 예산 카테고리(식비/쇼핑/문화·여가/교육·자기계발/생필품·경조사/기타)로 분류한다.
  * classify.ts가 입금을 소득원으로 분류하듯, 이건 지출을 예산 카테고리로 분류해서
  * budget.ts가 쓸 "카테고리별 과거평균지출"을 만든다. DB 접근 없는 순수 함수.
  */
@@ -47,7 +47,14 @@ export function sumSpendByCategory(transactions: ExpenseTransaction[]): Record<E
   const classified = classifyExpenseTransactions(transactions);
   const byTxId = new Map(transactions.map((tx) => [tx.id, tx]));
 
-  const totals: Record<ExpenseCategory, number> = { 식비: 0, 카페: 0, 쇼핑: 0, 교통: 0, 기타: 0 };
+  const totals: Record<ExpenseCategory, number> = {
+    식비: 0,
+    쇼핑: 0,
+    "문화/여가": 0,
+    "교육/자기계발": 0,
+    "생필품/경조사": 0,
+    기타: 0,
+  };
   for (const c of classified) {
     totals[c.category] += Math.abs(byTxId.get(c.txId)!.amount);
   }
