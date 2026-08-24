@@ -10,14 +10,15 @@ const DEFAULT_NICKNAME = "피그";
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
-const GROUP_ORDER: AiExpenseGroup[] = ["FOOD", "CAFE", "SHOPPING", "TRANSPORT", "OTHER"];
+const GROUP_ORDER: AiExpenseGroup[] = ["FOOD", "SHOPPING", "CULTURE", "EDUCATION", "NECESSITIES", "OTHER"];
 
 /** 지출 구성 바/범례 색상 — 마이페이지 구분 색상(tag-*)과는 별개로, 사이트 메인 팔레트(네이비/코발트/골드)에서 파생한 전용 톤. */
 const GROUP_COLOR_VAR: Record<AiExpenseGroup, string> = {
   FOOD: "var(--chart-food)",
-  CAFE: "var(--chart-cafe)",
   SHOPPING: "var(--chart-shopping)",
-  TRANSPORT: "var(--chart-transport)",
+  CULTURE: "var(--chart-culture)",
+  EDUCATION: "var(--chart-education)",
+  NECESSITIES: "var(--chart-necessities)",
   OTHER: "var(--chart-other)",
 };
 

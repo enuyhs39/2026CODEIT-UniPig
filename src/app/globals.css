@@ -43,9 +43,10 @@
 
   /* 홈 화면 지출 구성 차트 전용 — 메인 팔레트(네이비/코발트/버터)에서 파생 */
   --chart-food: #003f91;
-  --chart-cafe: #0067e8;
-  --chart-shopping: #2f83eb;
-  --chart-transport: #69a8f1;
+  --chart-shopping: #0067e8;
+  --chart-culture: #2f83eb;
+  --chart-education: #69a8f1;
+  --chart-necessities: #8fbef5;
   --chart-other: #b5d4f8;
 }
 
@@ -127,9 +128,10 @@
     --tag-red-text: #f16b60;
 
     --chart-food: #d8e9ff;
-    --chart-cafe: #9dc9ff;
-    --chart-shopping: #68abfa;
-    --chart-transport: #378eed;
+    --chart-shopping: #b8d9ff;
+    --chart-culture: #9dc9ff;
+    --chart-education: #68abfa;
+    --chart-necessities: #378eed;
     --chart-other: #176fc7;
   }
 }
@@ -171,9 +173,10 @@
   --tag-red-text: #f16b60;
 
   --chart-food: #d8e9ff;
-  --chart-cafe: #9dc9ff;
-  --chart-shopping: #68abfa;
-  --chart-transport: #378eed;
+  --chart-shopping: #b8d9ff;
+  --chart-culture: #9dc9ff;
+  --chart-education: #68abfa;
+  --chart-necessities: #378eed;
   --chart-other: #176fc7;
 }
 
@@ -213,9 +216,10 @@
   --tag-red-text: #dd463c;
 
   --chart-food: #003f91;
-  --chart-cafe: #0067e8;
-  --chart-shopping: #2f83eb;
-  --chart-transport: #69a8f1;
+  --chart-shopping: #0067e8;
+  --chart-culture: #2f83eb;
+  --chart-education: #69a8f1;
+  --chart-necessities: #8fbef5;
   --chart-other: #b5d4f8;
 }
 

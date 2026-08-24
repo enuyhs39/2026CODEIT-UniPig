@@ -22,12 +22,12 @@ type CategorySeed = {
 
 const CATEGORIES: CategorySeed[] = [
   { label: "일상", color: "GRAY", type: "EXPENSE", expenseGroup: "OTHER" },
-  { label: "생필품", color: "GREEN", type: "EXPENSE", expenseGroup: "SHOPPING" },
-  { label: "경조사", color: "GREEN", type: "EXPENSE", expenseGroup: "OTHER" },
+  { label: "생필품", color: "GREEN", type: "EXPENSE", expenseGroup: "NECESSITIES" },
+  { label: "경조사", color: "GREEN", type: "EXPENSE", expenseGroup: "NECESSITIES" },
   { label: "고정지출", color: "RED", type: "EXPENSE", expenseGroup: "OTHER" },
   { label: "약속", color: "PINK", type: "EXPENSE", expenseGroup: "FOOD" },
-  { label: "대외활동", color: "PURPLE", type: "EXPENSE", expenseGroup: "OTHER" },
-  { label: "문화/전시", color: "BROWN", type: "EXPENSE", expenseGroup: "OTHER" },
+  { label: "대외활동", color: "PURPLE", type: "EXPENSE", expenseGroup: "EDUCATION" },
+  { label: "문화/전시", color: "BROWN", type: "EXPENSE", expenseGroup: "CULTURE" },
   { label: "쇼핑", color: "YELLOW", type: "EXPENSE", expenseGroup: "SHOPPING" },
   { label: "배달음식", color: "ORANGE", type: "EXPENSE", expenseGroup: "FOOD" },
   { label: "관리", color: "BLUE", type: "EXPENSE", expenseGroup: "OTHER" },

@@ -1,12 +1,13 @@
 import type { ExpenseCategory, IncomeCategory } from "@/generated/prisma/enums";
 
-export const EXPENSE_GROUPS: ExpenseCategory[] = ["FOOD", "CAFE", "SHOPPING", "TRANSPORT", "OTHER"];
+export const EXPENSE_GROUPS: ExpenseCategory[] = ["FOOD", "SHOPPING", "CULTURE", "EDUCATION", "NECESSITIES", "OTHER"];
 
 export const EXPENSE_GROUP_LABEL: Record<ExpenseCategory, string> = {
   FOOD: "식비",
-  CAFE: "카페",
   SHOPPING: "쇼핑",
-  TRANSPORT: "교통",
+  CULTURE: "문화/여가",
+  EDUCATION: "교육/자기계발",
+  NECESSITIES: "생필품/경조사",
   OTHER: "기타",
 };
 

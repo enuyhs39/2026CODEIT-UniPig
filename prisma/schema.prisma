@@ -169,9 +169,10 @@ enum PaletteColor {
 /// AI피그 지출 예산 그룹(현희 쪽 고정 5분류). LedgerCategory가 여기 매핑돼야 AI 계산에서 누락되지 않는다.
 enum ExpenseCategory {
   FOOD
-  CAFE
   SHOPPING
-  TRANSPORT
+  CULTURE
+  EDUCATION
+  NECESSITIES
   OTHER
 }
 
