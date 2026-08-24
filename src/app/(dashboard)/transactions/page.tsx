@@ -116,11 +116,11 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
         <table className="w-full min-w-[560px] border-collapse text-[12.5px]">
           <thead>
             <tr className="border-b border-card-border text-left text-[11px] font-bold text-muted-foreground">
+              <th className="px-3 py-2.5 text-center">완료</th>
               <th className="px-3 py-2.5">날짜</th>
               <th className="px-3 py-2.5">구분</th>
               <th className="px-3 py-2.5">내역</th>
               <th className="px-3 py-2.5 text-right">금액</th>
-              <th className="px-3 py-2.5 text-center">예정</th>
               <th className="px-3 py-2.5" />
             </tr>
           </thead>
@@ -129,6 +129,22 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
               const status = STATUS_LABEL[entry.type][entry.isDone ? "done" : "pending"];
               return (
                 <tr key={entry.id} className="border-b border-card-border last:border-b-0">
+                  <td className="px-3 py-2.5 text-center">
+                    <form action={toggleLedgerEntryDone}>
+                      <input type="hidden" name="id" value={entry.id} />
+                      <input type="hidden" name="isDone" value={String(entry.isDone)} />
+                      <button
+                        type="submit"
+                        title={status}
+                        className={cn(
+                          "h-5 w-5 rounded-md border transition-colors",
+                          entry.isDone
+                            ? "border-accent bg-accent"
+                            : "border-card-border bg-background",
+                        )}
+                      />
+                    </form>
+                  </td>
                   <td className="whitespace-nowrap px-3 py-2.5 font-mono text-[12px] text-muted-foreground">
                     {formatDate(entry.date)}
                   </td>
@@ -151,22 +167,6 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
                   >
                     {entry.type === "EXPENSE" ? "-" : "+"}
                     {formatWon(entry.amount)}
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <form action={toggleLedgerEntryDone}>
-                      <input type="hidden" name="id" value={entry.id} />
-                      <input type="hidden" name="isDone" value={String(entry.isDone)} />
-                      <button
-                        type="submit"
-                        title={status}
-                        className={cn(
-                          "h-5 w-5 rounded-md border transition-colors",
-                          entry.isDone
-                            ? "border-accent bg-accent"
-                            : "border-card-border bg-background",
-                        )}
-                      />
-                    </form>
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <form action={deleteLedgerEntry}>
