@@ -2,7 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, type PieLabelRenderProps } from "recharts";
-import { buildExpenseChart, type ExpenseChartEntry, type ExpenseChartStatus } from "@/lib/expenseChart";
+import {
+  buildTransactionChart,
+  type TransactionChartEntry,
+  type TransactionChartStatus,
+} from "@/lib/transactionChart";
 
 type Category = {
   id: string;
@@ -12,14 +16,18 @@ type Category = {
 
 type Props = {
   categories: Category[];
-  entries: ExpenseChartEntry[];
+  entries: TransactionChartEntry[];
   rangeLabel: string;
-  status: ExpenseChartStatus;
+  status: TransactionChartStatus;
+  type: "expense" | "income";
 };
 
-const STATUS_COLORS: Record<ExpenseChartStatus, string[]> = {
-  done: ["#739be0", "#88aae4", "#9db9e8", "#b1c8ed", "#c5d6f0", "#d3e0f3", "#dee8f6", "#e7eef8", "#eef3fa", "#f4f7fc"],
-  pending: ["#d2796b", "#dc8d81", "#e3a096", "#e9b3aa", "#eec5bf", "#f2d2cd", "#f5ddd9", "#f7e5e2", "#f9ecea", "#fbf2f0"],
+const BLUE_COLORS = ["#739be0", "#88aae4", "#9db9e8", "#b1c8ed", "#c5d6f0", "#d3e0f3", "#dee8f6", "#e7eef8", "#eef3fa", "#f4f7fc"];
+const RED_COLORS = ["#d2796b", "#dc8d81", "#e3a096", "#e9b3aa", "#eec5bf", "#f2d2cd", "#f5ddd9", "#f7e5e2", "#f9ecea", "#fbf2f0"];
+
+const TYPE_STATUS_COLORS: Record<Props["type"], Record<TransactionChartStatus, string[]>> = {
+  expense: { pending: RED_COLORS, done: BLUE_COLORS },
+  income: { pending: BLUE_COLORS, done: RED_COLORS },
 };
 
 function formatWon(amount: number): string {
@@ -64,17 +72,18 @@ function FilterIcon() {
   );
 }
 
-export function ExpenseDonutChart({ categories, entries, rangeLabel, status }: Props) {
+export function TransactionDonutChart({ categories, entries, rangeLabel, status, type }: Props) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState(() => new Set(categories.map((category) => category.id)));
   const { slices, total } = useMemo(
-    () => buildExpenseChart(entries, selectedIds, status),
+    () => buildTransactionChart(entries, selectedIds, status),
     [entries, selectedIds, status],
   );
 
   const selectedCount = selectedIds.size;
   const allSelected = selectedCount === categories.length;
-  const colors = STATUS_COLORS[status];
+  const colors = TYPE_STATUS_COLORS[type][status];
+  const typeLabel = type === "expense" ? "지출" : "수입";
 
   function toggleCategory(id: string) {
     setSelectedIds((current) => {
@@ -93,7 +102,7 @@ export function ExpenseDonutChart({ categories, entries, rangeLabel, status }: P
     <section className="rounded-2xl bg-card p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-[14px] font-extrabold">지출 현황</h2>
+          <h2 className="text-[14px] font-extrabold">{typeLabel} 현황</h2>
           <p className="mt-0.5 text-[11.5px] text-muted-foreground">{rangeLabel} · 체크박스 기준</p>
         </div>
 
@@ -137,7 +146,7 @@ export function ExpenseDonutChart({ categories, entries, rangeLabel, status }: P
                 ))}
               </div>
               <p className="mt-2 border-t border-card-border pt-2 text-[10.5px] leading-relaxed text-muted-foreground">
-                적금처럼 분석에서 뺄 지출 구분은 체크를 해제하세요.
+                분석에서 뺄 {typeLabel} 구분은 체크를 해제하세요.
               </p>
             </div>
           )}
@@ -206,7 +215,7 @@ export function ExpenseDonutChart({ categories, entries, rangeLabel, status }: P
         </div>
       ) : (
         <div className="mt-3 flex h-52 flex-col items-center justify-center rounded-xl bg-background text-center">
-          <p className="text-[13px] font-bold">표시할 {status === "done" ? "완료" : "예정"} 지출이 없어요</p>
+          <p className="text-[13px] font-bold">표시할 {status === "done" ? "완료" : "예정"} {typeLabel}이 없어요</p>
           <p className="mt-1 text-[11.5px] text-muted-foreground">
             구분 필터를 확인하거나 아래 내역의 완료 체크를 바꿔보세요.
           </p>

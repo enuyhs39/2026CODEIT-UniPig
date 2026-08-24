@@ -3,13 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
-import { PIGGYBANK_CATEGORIES, PIGGYBANK_STATUSES } from "@/lib/piggyBankCategories";
-import type { PiggyBankCategory, PiggyBankItemStatus } from "@/generated/prisma/enums";
-
-function parseCategory(value: FormDataEntryValue | null): PiggyBankCategory {
-  const category = String(value ?? "OTHER");
-  return (PIGGYBANK_CATEGORIES as string[]).includes(category) ? (category as PiggyBankCategory) : "OTHER";
-}
+import { PIGGYBANK_STATUSES } from "@/lib/piggyBankCategories";
+import type { PiggyBankItemStatus } from "@/generated/prisma/enums";
 
 function parseStatus(value: FormDataEntryValue | null): PiggyBankItemStatus {
   const status = String(value ?? "PENDING");
@@ -26,21 +21,29 @@ export async function createPiggyBankItem(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const targetAmount = Number(formData.get("targetAmount"));
   const currentAmount = Number(formData.get("currentAmount") ?? 0);
+  const categoryOptionId = String(formData.get("categoryOptionId") ?? "");
 
   if (!title) return;
   if (!Number.isFinite(targetAmount) || targetAmount <= 0) return;
   if (!Number.isFinite(currentAmount) || currentAmount < 0) return;
+  const categoryOption = await prisma.piggyBankCategoryOption.findFirst({
+    where: { id: categoryOptionId, userId },
+    select: { id: true, group: true },
+  });
+  if (!categoryOption) return;
 
   await prisma.piggyBankItem.create({
     data: {
       userId,
       title,
-      category: parseCategory(formData.get("category")),
+      category: categoryOption.group,
+      categoryOptionId: categoryOption.id,
       targetAmount: Math.round(targetAmount),
       currentAmount: Math.round(currentAmount),
       startDate: parseDate(formData.get("startDate")),
       targetDate: parseDate(formData.get("targetDate")),
       status: parseStatus(formData.get("status")),
+      note: String(formData.get("note") ?? "").trim(),
     },
   });
 
@@ -53,21 +56,29 @@ export async function updatePiggyBankItem(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const targetAmount = Number(formData.get("targetAmount"));
   const currentAmount = Number(formData.get("currentAmount"));
+  const categoryOptionId = String(formData.get("categoryOptionId") ?? "");
 
   if (!id || !title) return;
   if (!Number.isFinite(targetAmount) || targetAmount <= 0) return;
   if (!Number.isFinite(currentAmount) || currentAmount < 0) return;
+  const categoryOption = await prisma.piggyBankCategoryOption.findFirst({
+    where: { id: categoryOptionId, userId },
+    select: { id: true, group: true },
+  });
+  if (!categoryOption) return;
 
   await prisma.piggyBankItem.updateMany({
     where: { id, userId },
     data: {
       title,
-      category: parseCategory(formData.get("category")),
+      category: categoryOption.group,
+      categoryOptionId: categoryOption.id,
       targetAmount: Math.round(targetAmount),
       currentAmount: Math.round(currentAmount),
       startDate: parseDate(formData.get("startDate")),
       targetDate: parseDate(formData.get("targetDate")),
       status: parseStatus(formData.get("status")),
+      note: String(formData.get("note") ?? "").trim(),
     },
   });
 

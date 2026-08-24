@@ -4,10 +4,10 @@ import { requireUserId } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { PALETTE_BADGE_CLASSES } from "@/lib/categoryColors";
 import { AddEntryToolbar } from "@/components/transactions/add-entry-toolbar";
-import { ExpenseDonutChart } from "@/components/transactions/expense-donut-chart";
+import { TransactionDonutChart } from "@/components/transactions/transaction-donut-chart";
 import { deleteLedgerEntry, toggleLedgerEntryDone } from "./actions";
 import type { LedgerEntryType } from "@/generated/prisma/enums";
-import type { ExpenseChartStatus } from "@/lib/expenseChart";
+import type { TransactionChartStatus } from "@/lib/transactionChart";
 
 const TYPE_TABS = [
   { value: "expense", label: "지출" },
@@ -40,8 +40,8 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   const fromRaw = typeof params.from === "string" ? params.from : "";
   const toRaw = typeof params.to === "string" ? params.to : "";
   const typeTab: TypeTab = params.type === "income" ? "income" : params.type === "all" ? "all" : "expense";
-  const chartStatus: ExpenseChartStatus | undefined =
-    typeTab === "expense" && (params.chart === "pending" || params.chart === "done") ? params.chart : undefined;
+  const chartStatus: TransactionChartStatus | undefined =
+    typeTab !== "all" && (params.chart === "pending" || params.chart === "done") ? params.chart : undefined;
   const typeFilter: LedgerEntryType | undefined =
     typeTab === "expense" ? "EXPENSE" : typeTab === "income" ? "INCOME" : undefined;
 
@@ -73,9 +73,13 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   const otherSort = sort === "asc" ? "desc" : "asc";
   const baseQuery = hasCustomRange ? `from=${fromRaw}&to=${toRaw}` : `month=${month}`;
   const sortQuery = `${baseQuery}&type=${typeTab}${chartStatus ? `&chart=${chartStatus}` : ""}`;
-  const expenseCategories = categories.filter((category) => category.type === "EXPENSE");
-  const expenseEntries = entries
-    .filter((entry) => entry.type === "EXPENSE")
+  const chartEntryType: LedgerEntryType | undefined =
+    typeTab === "expense" ? "EXPENSE" : typeTab === "income" ? "INCOME" : undefined;
+  const chartCategories = chartEntryType
+    ? categories.filter((category) => category.type === chartEntryType)
+    : [];
+  const chartEntries = entries
+    .filter((entry) => entry.type === chartEntryType)
     .map((entry) => ({
       amount: entry.amount,
       categoryId: entry.categoryId,
@@ -87,7 +91,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="rounded-2xl bg-accent-soft px-5 py-4">
+      <div className="rounded-2xl bg-gold-soft px-5 py-4 shadow-sm">
         <h1 className="text-[19px] font-extrabold text-foreground">{title}</h1>
       </div>
 
@@ -108,15 +112,15 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
         ))}
       </div>
 
-      {typeTab === "expense" && (
+      {typeTab !== "all" && (
         <div className="flex items-center gap-1.5">
           {([
-            { value: "pending", label: "지출 예정" },
-            { value: "done", label: "지출 완료" },
+            { value: "pending", label: `${typeLabel} 예정` },
+            { value: "done", label: `${typeLabel} 완료` },
           ] as const).map((item) => (
             <Link
               key={item.value}
-              href={`?${baseQuery}&sort=${sort}&type=expense&chart=${item.value}`}
+              href={`?${baseQuery}&sort=${sort}&type=${typeTab}&chart=${item.value}`}
               className={cn(
                 "rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors",
                 chartStatus === item.value
@@ -144,16 +148,17 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
         chartStatus={chartStatus}
       />
 
-      {typeTab === "expense" && chartStatus && expenseCategories.length > 0 && (
-        <ExpenseDonutChart
-          categories={expenseCategories.map((category) => ({
+      {typeTab !== "all" && chartStatus && chartCategories.length > 0 && (
+        <TransactionDonutChart
+          categories={chartCategories.map((category) => ({
             id: category.id,
             label: category.label,
             color: category.color,
           }))}
-          entries={expenseEntries}
+          entries={chartEntries}
           rangeLabel={chartRangeLabel}
           status={chartStatus}
+          type={typeTab}
         />
       )}
 

@@ -1,6 +1,6 @@
-export type ExpenseChartStatus = "pending" | "done";
+export type TransactionChartStatus = "pending" | "done";
 
-export type ExpenseChartEntry = {
+export type TransactionChartEntry = {
   amount: number;
   categoryId: string;
   categoryLabel: string;
@@ -8,7 +8,7 @@ export type ExpenseChartEntry = {
   isDone: boolean;
 };
 
-export type ExpenseChartSlice = {
+export type TransactionChartSlice = {
   categoryId: string;
   label: string;
   color: string;
@@ -16,12 +16,12 @@ export type ExpenseChartSlice = {
   percentage: number;
 };
 
-export function buildExpenseChart(
-  entries: ExpenseChartEntry[],
+export function buildTransactionChart(
+  entries: TransactionChartEntry[],
   selectedCategoryIds: ReadonlySet<string>,
-  status: ExpenseChartStatus,
-): { slices: ExpenseChartSlice[]; total: number } {
-  const totals = new Map<string, Omit<ExpenseChartSlice, "percentage">>();
+  status: TransactionChartStatus,
+): { slices: TransactionChartSlice[]; total: number } {
+  const totals = new Map<string, Omit<TransactionChartSlice, "percentage">>();
   const isDone = status === "done";
 
   for (const entry of entries) {
