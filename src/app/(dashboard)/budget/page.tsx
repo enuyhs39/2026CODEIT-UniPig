@@ -1,15 +1,15 @@
 import { buildProfiledSources } from "@/core/sourcePipeline";
 import { forecastIncome, type ForecastSourceInput } from "@/core/forecast";
 import { hashSeed } from "@/core/stats";
-import { monthStart, toMonthKey } from "@/core/dateUtils";
+import { toMonthKey } from "@/core/dateUtils";
 import type { IncomeCategory } from "@/core/classify";
-import { sumSpendByCategory } from "@/core/classifyExpense";
-import { OVERDUE_ALERT_CATEGORIES, type ExpenseCategory } from "@/config";
+import { OVERDUE_ALERT_CATEGORIES } from "@/config";
 import { loadIncomeTransactionsAndRules, loadTerminatedSourceIds } from "@/lib/incomeData";
+import { getConfirmedBudgetProgress } from "@/lib/confirmedBudget";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { SourceStatusBadge } from "@/components/SourceStatusBadge";
-import { BudgetPlanner, type ConfirmedProgress } from "@/components/BudgetPlanner";
+import { BudgetPlanner } from "@/components/BudgetPlanner";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { formatWon, formatWonThousand } from "@/lib/format";
 
@@ -62,21 +62,7 @@ async function BudgetContent({ userId }: { userId: string }) {
   const seed = hashSeed(`${userId}:${targetMonth}`);
   const forecast = forecastIncome(forecastSources, targetMonth, seed);
 
-  const confirmedPlan = await prisma.budgetPlan.findFirst({
-    where: { userId, targetMonth, status: "CONFIRMED" },
-  });
-  let confirmedProgress: ConfirmedProgress | null = null;
-  if (confirmedPlan) {
-    const monthTransactions = await prisma.transaction.findMany({
-      where: { userId, occurredAt: { gte: monthStart(targetMonth), lte: new Date() } },
-    });
-    confirmedProgress = {
-      baseIncome: confirmedPlan.baseIncome,
-      saving: confirmedPlan.saving,
-      allocations: confirmedPlan.allocations as Record<ExpenseCategory, number>,
-      spentByCategory: sumSpendByCategory(monthTransactions),
-    };
-  }
+  const confirmedProgress = await getConfirmedBudgetProgress(userId, targetMonth);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-10">
