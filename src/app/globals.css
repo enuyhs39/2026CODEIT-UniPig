@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "pretendard/dist/web/static/pretendard.css";
+@import "@noonnu/gmarket-sans-medium/index.css";
 
 :root {
   --background: #dceeff;
@@ -88,6 +89,7 @@
   --color-ice: var(--color-ice);
   --font-sans: "Pretendard", var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-geist-mono);
+  --font-headline: "GmarketSansMedium", "Pretendard", var(--font-geist-sans), sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -223,4 +225,10 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+}
+
+/* 큰 헤드라인(페이지 타이틀)만 Gmarket Sans, 금액·본문은 계속 Pretendard(body 상속) */
+h1,
+h2 {
+  font-family: var(--font-headline), "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
 }
