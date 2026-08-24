@@ -19,6 +19,7 @@ type Props = {
   defaultDate: string;
   defaultType?: LedgerEntryType;
   typeTabValue: string;
+  chartStatus?: "pending" | "done";
 };
 
 function ChevronIcon({ open }: { open: boolean }) {
@@ -48,6 +49,7 @@ export function AddEntryToolbar({
   defaultDate,
   defaultType,
   typeTabValue,
+  chartStatus,
 }: Props) {
   const [open, setOpen] = useState(false);
 
@@ -63,6 +65,7 @@ export function AddEntryToolbar({
 
         <form method="GET" className="flex items-center gap-1.5">
           <input type="hidden" name="type" value={typeTabValue} />
+          {chartStatus && <input type="hidden" name="chart" value={chartStatus} />}
           <input
             type="date"
             name="from"

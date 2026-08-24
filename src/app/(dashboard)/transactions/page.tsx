@@ -4,8 +4,10 @@ import { requireUserId } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { PALETTE_BADGE_CLASSES } from "@/lib/categoryColors";
 import { AddEntryToolbar } from "@/components/transactions/add-entry-toolbar";
+import { ExpenseDonutChart } from "@/components/transactions/expense-donut-chart";
 import { deleteLedgerEntry, toggleLedgerEntryDone } from "./actions";
 import type { LedgerEntryType } from "@/generated/prisma/enums";
+import type { ExpenseChartStatus } from "@/lib/expenseChart";
 
 const TYPE_TABS = [
   { value: "expense", label: "지출" },
@@ -38,6 +40,8 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   const fromRaw = typeof params.from === "string" ? params.from : "";
   const toRaw = typeof params.to === "string" ? params.to : "";
   const typeTab: TypeTab = params.type === "income" ? "income" : params.type === "all" ? "all" : "expense";
+  const chartStatus: ExpenseChartStatus | undefined =
+    typeTab === "expense" && (params.chart === "pending" || params.chart === "done") ? params.chart : undefined;
   const typeFilter: LedgerEntryType | undefined =
     typeTab === "expense" ? "EXPENSE" : typeTab === "income" ? "INCOME" : undefined;
 
@@ -68,7 +72,18 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   const title = hasCustomRange ? `${fromRaw} ~ ${toRaw} ${typeLabel} 내역` : `${month}월 ${typeLabel} 내역`;
   const otherSort = sort === "asc" ? "desc" : "asc";
   const baseQuery = hasCustomRange ? `from=${fromRaw}&to=${toRaw}` : `month=${month}`;
-  const sortQuery = `${baseQuery}&type=${typeTab}`;
+  const sortQuery = `${baseQuery}&type=${typeTab}${chartStatus ? `&chart=${chartStatus}` : ""}`;
+  const expenseCategories = categories.filter((category) => category.type === "EXPENSE");
+  const expenseEntries = entries
+    .filter((entry) => entry.type === "EXPENSE")
+    .map((entry) => ({
+      amount: entry.amount,
+      categoryId: entry.categoryId,
+      categoryLabel: entry.category.label,
+      categoryColor: entry.category.color,
+      isDone: entry.isDone,
+    }));
+  const chartRangeLabel = hasCustomRange ? `${fromRaw} ~ ${toRaw}` : `${year}년 ${month}월`;
 
   return (
     <div className="flex flex-col gap-5">
@@ -93,18 +108,54 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
         ))}
       </div>
 
+      {typeTab === "expense" && (
+        <div className="flex items-center gap-1.5">
+          {([
+            { value: "pending", label: "지출 예정" },
+            { value: "done", label: "지출 완료" },
+          ] as const).map((item) => (
+            <Link
+              key={item.value}
+              href={`?${baseQuery}&sort=${sort}&type=expense&chart=${item.value}`}
+              className={cn(
+                "rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors",
+                chartStatus === item.value
+                  ? "bg-foreground text-background"
+                  : "border border-card-border text-muted-foreground hover:border-accent hover:text-accent",
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+
       <AddEntryToolbar
         sortLabel={`날짜 ${sort === "desc" ? "최신순 ↓" : "오래된순 ↑"}`}
         sortHref={`?${sortQuery}&sort=${otherSort}`}
         fromValue={fromRaw || toDateInputValue(rangeStart)}
         toValue={toRaw}
         hasCustomRange={hasCustomRange}
-        resetHref={`?month=${month}&type=${typeTab}`}
+        resetHref={`?month=${month}&type=${typeTab}${chartStatus ? `&chart=${chartStatus}` : ""}`}
         categories={categories}
         defaultDate={toDateInputValue(now)}
         defaultType={typeTab === "income" ? "INCOME" : "EXPENSE"}
         typeTabValue={typeTab}
+        chartStatus={chartStatus}
       />
+
+      {typeTab === "expense" && chartStatus && expenseCategories.length > 0 && (
+        <ExpenseDonutChart
+          categories={expenseCategories.map((category) => ({
+            id: category.id,
+            label: category.label,
+            color: category.color,
+          }))}
+          entries={expenseEntries}
+          rangeLabel={chartRangeLabel}
+          status={chartStatus}
+        />
+      )}
 
       {categories.length === 0 && (
         <p className="rounded-2xl border border-dashed border-card-border p-4 text-center text-[12.5px] text-muted-foreground">
