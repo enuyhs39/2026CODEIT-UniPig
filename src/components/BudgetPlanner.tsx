@@ -24,6 +24,7 @@ type DraftPlan = {
   id: string;
   targetMonth: string;
   baseIncome: number;
+  spendable: number;
   aiAllocations: Record<ExpenseCategory, number>;
   allocations: Record<ExpenseCategory, number>;
   saving: number;
@@ -216,10 +217,9 @@ export function BudgetPlanner({ targetMonth, confirmedProgress }: Props) {
     );
   }
 
-  const total = userAllocations
+  const allocatedTotal = userAllocations
     ? CATEGORIES.reduce((sum, c) => sum + (userAllocations[c] ?? 0), 0)
     : 0;
-  const spendable = total; // 카테고리 배분 합계 = disposable - saving (budget.ts 보존 법칙)
 
   return (
     <div className="flex flex-col gap-5 rounded-2xl bg-white p-6 shadow-sm">
@@ -234,7 +234,7 @@ export function BudgetPlanner({ targetMonth, confirmedProgress }: Props) {
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div className="rounded-xl bg-ice p-4">
           <p className="font-bold text-navy/80">가용 예산</p>
-          <p className="font-black text-navy">{formatWonThousand(spendable)}</p>
+          <p className="font-black text-navy">{formatWonThousand(plan.spendable)}</p>
           <p className="text-xs text-navy/40">= 예상수입 - 고정지출 - 저축 비용</p>
         </div>
         <div className="rounded-xl bg-ice p-4">
@@ -266,7 +266,7 @@ export function BudgetPlanner({ targetMonth, confirmedProgress }: Props) {
       </div>
 
       <p className="text-xs text-navy/50">
-        카테고리 배분 합계 {formatWon(spendable)} (AI 원안 기준 가용 예산과 다를 수 있어요 — 자유롭게 조정해보세요)
+        카테고리 배분 합계 {formatWon(allocatedTotal)} (가용 예산과 다를 수 있어요 — 자유롭게 조정해보세요)
       </p>
 
       <button
@@ -307,7 +307,9 @@ function BudgetProgressView({
   onChange: (category: ExpenseCategory, amount: number) => void;
   onSave: () => void;
 }) {
-  const budgetLimit = CATEGORIES.reduce((sum, c) => sum + (progress.allocations[c] ?? 0), 0);
+  // budgetLimit은 확정 배분 합계(progress.allocations)가 아니라 baseIncome-고정지출-저축으로 직접 계산한다 —
+  // 배분 합계로 계산하면 반올림/사용자 조정 때문에 실제 가용예산과 어긋날 수 있어서 고친 값이다.
+  const budgetLimit = progress.baseIncome - sumFixedExpenses(fixedExpensesByCategory) - progress.saving;
   const allocatedTotal = CATEGORIES.reduce((sum, c) => sum + (allocations[c] ?? 0), 0);
   const allocationBalance = budgetLimit - allocatedTotal;
   const allocationOver = allocationBalance < 0;
@@ -353,6 +355,10 @@ function BudgetProgressView({
           <p className="text-xs text-navy/40">현재 배분 합계 {formatWon(allocatedTotal)}</p>
         </div>
       </div>
+
+      <p className="text-xs text-navy/50">
+        확정 배분 합계 {formatWon(allocatedTotal)} (가용 예산과 다를 수 있어요 — 확정 시 조정한 값이에요)
+      </p>
 
       <div className="flex flex-col gap-4">
         {CATEGORIES.map((category) => {
@@ -451,7 +457,18 @@ function FixedExpensesBreakdown({
 }) {
   return (
     <div className="flex flex-col gap-2 text-sm">
-      <p className="font-bold text-navy/80">고정지출</p>
+      <div className="flex items-center justify-between">
+        <p className="font-bold text-navy/80">고정지출</p>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={onApply}
+            className="rounded-full bg-ice px-3 py-1.5 font-medium text-navy"
+          >
+            적용
+          </button>
+        )}
+      </div>
       {FIXED_EXPENSE_CATEGORY_ORDER.map((category) => (
         <div key={category} className="flex items-center justify-between gap-3">
           <label className="text-navy/70" htmlFor={`fixedExpense-${category}`}>
@@ -476,15 +493,6 @@ function FixedExpensesBreakdown({
         <span>합계</span>
         <span>{formatWon(sumFixedExpenses(value))}</span>
       </div>
-      {!readOnly && (
-        <button
-          type="button"
-          onClick={onApply}
-          className="self-start rounded-full bg-ice px-3 py-1.5 font-medium text-navy"
-        >
-          적용
-        </button>
-      )}
     </div>
   );
 }
