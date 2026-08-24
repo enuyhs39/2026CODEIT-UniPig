@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ExpenseCategory } from "@/config";
 import { simulatePurchase, type SimulateBudgetProgress } from "@/core/simulatePurchase";
 import { formatWon } from "@/lib/format";
+import { TimeMachineHero } from "@/components/simulation/time-machine-hero";
 
 const CATEGORIES: ExpenseCategory[] = ["식비", "쇼핑", "문화/여가", "교육/자기계발", "생필품/경조사", "기타"];
 
@@ -73,6 +74,8 @@ export function PurchaseSimulator({ progress }: { progress: SimulateBudgetProgre
           </div>
         )}
       </div>
+
+      <TimeMachineHero />
     </div>
   );
 }

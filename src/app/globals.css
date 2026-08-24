@@ -224,3 +224,25 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
 }
+
+/* 구매 시뮬레이션 히어로(타임머신) — 우주에서 천천히 떠다니는 듯한 부유 모션.
+   --float-y(수직 이동량)/--float-rot(회전각)를 요소별로 다르게 줘서 결을 다르게 만든다. */
+@keyframes unipig-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(calc(var(--float-y, 8px) * -1)) rotate(calc(var(--float-rot, 1deg) * -1));
+  }
+  75% {
+    transform: translateY(var(--float-y, 8px)) rotate(var(--float-rot, 1deg));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .unipig-float {
+    animation: unipig-float var(--float-duration, 4s) ease-in-out infinite;
+    animation-delay: var(--float-delay, 0s);
+  }
+}
