@@ -4,12 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { logout } from "@/lib/authActions";
 
 const NAV_ITEMS = [
   { href: "/", label: "유니피그", icon: "/icons/nav-home.png" },
   { href: "/transactions", label: "지출/수입", icon: "/icons/nav-transactions.png" },
   { href: "/piggybank", label: "저금통", icon: "/icons/nav-piggybank.png" },
-  { href: "/budget", label: "AI피그", icon: "/icons/nav-budget.png" },
+  { href: "/budget", label: "예산관리", icon: "/icons/nav-budget.png" },
   { href: "/simulation", label: "구매 시뮬레이션", icon: "/icons/nav-simulation.png" },
 ] as const;
 
@@ -32,6 +33,16 @@ function SettingsIcon() {
   );
 }
 
+function LogoutIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="21" y1="12" x2="9" y2="12" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function DashboardNav() {
   const pathname = usePathname();
 
@@ -47,7 +58,7 @@ export function DashboardNav() {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground",
-                  isActive(pathname, item.href) && "bg-accent-soft text-foreground",
+                  isActive(pathname, item.href) && "bg-accent text-white",
                 )}
               >
                 <Image src={item.icon} alt="" width={20} height={20} className="shrink-0" />
@@ -60,11 +71,20 @@ export function DashboardNav() {
             aria-label="마이페이지"
             className={cn(
               "ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground sm:ml-0",
-              isActive(pathname, MYPAGE_HREF) && "bg-accent-soft text-foreground",
+              isActive(pathname, MYPAGE_HREF) && "bg-accent text-white",
             )}
           >
             <SettingsIcon />
           </Link>
+          <form action={logout}>
+            <button
+              type="submit"
+              aria-label="로그아웃"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <LogoutIcon />
+            </button>
+          </form>
         </div>
       </header>
 
@@ -78,7 +98,7 @@ export function DashboardNav() {
             href={item.href}
             className={cn(
               "flex flex-col items-center gap-0.5 rounded-full px-3 py-1.5 text-[10px] font-medium whitespace-nowrap text-muted-foreground transition-colors",
-              isActive(pathname, item.href) && "bg-accent-soft text-foreground",
+              isActive(pathname, item.href) && "bg-accent text-white",
             )}
           >
             <Image src={item.icon} alt="" width={28} height={28} />

@@ -6,7 +6,14 @@ import { requireUserId } from "@/lib/session";
 import { DEFAULT_SAVING_RATE } from "@/config";
 import { PALETTE_COLORS } from "@/lib/categoryColors";
 import { EXPENSE_GROUPS, INCOME_GROUPS } from "@/lib/aiCategoryGroups";
-import type { ExpenseCategory, IncomeCategory, LedgerEntryType, PaletteColor } from "@/generated/prisma/enums";
+import { PIGGYBANK_CATEGORIES } from "@/lib/piggyBankCategories";
+import type {
+  ExpenseCategory,
+  IncomeCategory,
+  LedgerEntryType,
+  PaletteColor,
+  PiggyBankCategory,
+} from "@/generated/prisma/enums";
 
 const MAX_NICKNAME_LENGTH = 20;
 const MAX_CATEGORY_LABEL_LENGTH = 20;
@@ -99,4 +106,60 @@ export async function deleteLedgerCategory(formData: FormData) {
 
   revalidatePath("/mypage");
   revalidatePath("/transactions");
+}
+
+function parsePiggyBankGroup(value: FormDataEntryValue | null): PiggyBankCategory | null {
+  const group = String(value ?? "");
+  return (PIGGYBANK_CATEGORIES as string[]).includes(group) ? (group as PiggyBankCategory) : null;
+}
+
+export async function createPiggyBankCategory(formData: FormData) {
+  const userId = await requireUserId();
+  const label = String(formData.get("label") ?? "").trim().slice(0, MAX_CATEGORY_LABEL_LENGTH);
+  const color = parseColor(formData.get("color"));
+  const group = parsePiggyBankGroup(formData.get("fixedGroup"));
+  if (!label || !group) return;
+
+  const count = await prisma.piggyBankCategoryOption.count({ where: { userId } });
+  try {
+    await prisma.piggyBankCategoryOption.create({
+      data: { userId, label, color, group, sortOrder: count },
+    });
+  } catch {
+    return;
+  }
+
+  revalidatePath("/mypage");
+  revalidatePath("/piggybank");
+}
+
+export async function updatePiggyBankCategory(formData: FormData) {
+  const userId = await requireUserId();
+  const id = String(formData.get("id") ?? "");
+  const label = String(formData.get("label") ?? "").trim().slice(0, MAX_CATEGORY_LABEL_LENGTH);
+  const color = parseColor(formData.get("color"));
+  const group = parsePiggyBankGroup(formData.get("fixedGroup"));
+  if (!id || !label || !group) return;
+
+  try {
+    await prisma.piggyBankCategoryOption.updateMany({
+      where: { id, userId },
+      data: { label, color, group },
+    });
+  } catch {
+    return;
+  }
+
+  revalidatePath("/mypage");
+  revalidatePath("/piggybank");
+}
+
+export async function deletePiggyBankCategory(formData: FormData) {
+  const userId = await requireUserId();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await prisma.piggyBankCategoryOption.deleteMany({ where: { id, userId } });
+  revalidatePath("/mypage");
+  revalidatePath("/piggybank");
 }

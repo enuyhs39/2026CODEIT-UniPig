@@ -116,17 +116,36 @@ enum PiggyBankCategory {
 
 /// 저금통(통장/주식/적금 등) 항목. 저금통 페이지에서 카드로 표시.
 model PiggyBankItem {
-  id            String              @id @default(cuid())
-  userId        String              @map("user_id")
-  title         String
-  category      PiggyBankCategory   @default(OTHER)
-  targetAmount  Int                 @map("target_amount")
-  currentAmount Int                 @default(0) @map("current_amount")
-  startDate     DateTime?           @map("start_date")
-  targetDate    DateTime?           @map("target_date")
-  status        PiggyBankItemStatus @default(PENDING)
+  id               String              @id @default(cuid())
+  userId           String              @map("user_id")
+  title            String
+  category         PiggyBankCategory   @default(OTHER)
+  targetAmount     Int                 @map("target_amount")
+  currentAmount    Int                 @default(0) @map("current_amount")
+  startDate        DateTime?           @map("start_date")
+  targetDate       DateTime?           @map("target_date")
+  status           PiggyBankItemStatus @default(PENDING)
+  note             String              @default("")
+  categoryOptionId String?             @map("category_option_id")
+
+  categoryOption PiggyBankCategoryOption? @relation(fields: [categoryOptionId], references: [id], onDelete: SetNull)
 
   @@map("piggybank_items")
+}
+
+/// 사용자가 저금통에서 쓰는 카테고리. 고정 분류(PARKING/SAVINGS/STOCK/OTHER)에 이름과 색상을 입힌다.
+model PiggyBankCategoryOption {
+  id        String            @id @default(cuid())
+  userId    String            @map("user_id")
+  label     String
+  color     PaletteColor      @default(DEFAULT)
+  group     PiggyBankCategory
+  sortOrder Int               @default(0) @map("sort_order")
+
+  items PiggyBankItem[]
+
+  @@unique([userId, label])
+  @@map("piggybank_category_options")
 }
 
 enum LedgerEntryType {
@@ -159,11 +178,11 @@ enum ExpenseCategory {
 /// 지출/수입 "구분" 옵션 목록. 마이페이지 설정에서 사용자가 직접 추가·수정·삭제한다.
 /// type에 따라 expenseGroup(지출) 또는 incomeGroup(수입) 중 하나만 채워진다 — AI피그 예산 계산이 참조하는 고정 그룹.
 model LedgerCategory {
-  id           String          @id @default(cuid())
-  userId       String          @map("user_id")
+  id           String           @id @default(cuid())
+  userId       String           @map("user_id")
   label        String
-  color        PaletteColor    @default(DEFAULT)
-  sortOrder    Int             @default(0) @map("sort_order")
+  color        PaletteColor     @default(DEFAULT)
+  sortOrder    Int              @default(0) @map("sort_order")
   type         LedgerEntryType
   expenseGroup ExpenseCategory? @map("expense_group")
   incomeGroup  IncomeCategory?  @map("income_group")

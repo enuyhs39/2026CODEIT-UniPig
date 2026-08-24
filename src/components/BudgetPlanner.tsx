@@ -41,6 +41,7 @@ type DeficitResult = {
 type DraftResponse = DraftPlan | DeficitResult;
 
 export type ConfirmedProgress = {
+  planId: string;
   baseIncome: number;
   saving: number;
   allocations: Record<ExpenseCategory, number>;
@@ -71,6 +72,10 @@ export function BudgetPlanner({ targetMonth, confirmedProgress }: Props) {
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [editingConfirmed, setEditingConfirmed] = useState(false);
+  const [confirmedAllocations, setConfirmedAllocations] = useState<Record<ExpenseCategory, number> | null>(
+    confirmedProgress?.allocations ?? null,
+  );
 
   async function fetchDraft(fixed: number) {
     setLoading(true);
@@ -138,8 +143,52 @@ export function BudgetPlanner({ targetMonth, confirmedProgress }: Props) {
     router.refresh();
   }
 
+  async function handleConfirmedUpdate() {
+    if (!confirmedProgress || !confirmedAllocations) return;
+    setConfirming(true);
+    setConfirmError(null);
+    const res = await fetch("/api/budget/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ planId: confirmedProgress.planId, allocations: confirmedAllocations }),
+    });
+    setConfirming(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setConfirmError(data.error ?? "예산 조정 내용을 저장하지 못했어요. 다시 시도해주세요");
+      return;
+    }
+    setEditingConfirmed(false);
+    router.refresh();
+  }
+
   if (confirmedProgress) {
-    return <BudgetProgressView progress={confirmedProgress} fixedExpensesByCategory={fixedExpensesByCategory} />;
+    return (
+      <BudgetProgressView
+        progress={confirmedProgress}
+        fixedExpensesByCategory={fixedExpensesByCategory}
+        editing={editingConfirmed}
+        allocations={confirmedAllocations ?? confirmedProgress.allocations}
+        confirming={confirming}
+        error={confirmError}
+        onEdit={() => {
+          setConfirmedAllocations(confirmedProgress.allocations);
+          setConfirmError(null);
+          setEditingConfirmed(true);
+        }}
+        onCancel={() => {
+          setConfirmedAllocations(confirmedProgress.allocations);
+          setConfirmError(null);
+          setEditingConfirmed(false);
+        }}
+        onChange={(category, amount) =>
+          setConfirmedAllocations((prev) =>
+            prev ? { ...prev, [category]: amount } : { ...confirmedProgress.allocations, [category]: amount },
+          )
+        }
+        onSave={handleConfirmedUpdate}
+      />
+    );
   }
 
   if (loading) {
@@ -238,26 +287,72 @@ export function BudgetPlanner({ targetMonth, confirmedProgress }: Props) {
 function BudgetProgressView({
   progress,
   fixedExpensesByCategory,
+  editing,
+  allocations,
+  confirming,
+  error,
+  onEdit,
+  onCancel,
+  onChange,
+  onSave,
 }: {
   progress: ConfirmedProgress;
   fixedExpensesByCategory: Record<FixedExpenseCategory, number>;
+  editing: boolean;
+  allocations: Record<ExpenseCategory, number>;
+  confirming: boolean;
+  error: string | null;
+  onEdit: () => void;
+  onCancel: () => void;
+  onChange: (category: ExpenseCategory, amount: number) => void;
+  onSave: () => void;
 }) {
-  const spendable = progress.baseIncome - sumFixedExpenses(fixedExpensesByCategory) - progress.saving;
-  const allocatedTotal = CATEGORIES.reduce((sum, c) => sum + (progress.allocations[c] ?? 0), 0);
+  // budgetLimit은 확정 배분 합계(progress.allocations)가 아니라 baseIncome-고정지출-저축으로 직접 계산한다 —
+  // 배분 합계로 계산하면 반올림/사용자 조정 때문에 실제 가용예산과 어긋날 수 있어서 고친 값이다.
+  const budgetLimit = progress.baseIncome - sumFixedExpenses(fixedExpensesByCategory) - progress.saving;
+  const allocatedTotal = CATEGORIES.reduce((sum, c) => sum + (allocations[c] ?? 0), 0);
+  const allocationBalance = budgetLimit - allocatedTotal;
+  const allocationOver = allocationBalance < 0;
 
   return (
     <div className="flex flex-col gap-5 rounded-2xl bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="font-bold text-navy">이번 달 확정 예산</p>
+          <p className="mt-1 text-xs leading-relaxed text-navy/50">
+            거래에서 집계한 <strong className="font-semibold text-navy/70">실제 사용액</strong>과 내가 정한{" "}
+            <strong className="font-semibold text-navy/70">카테고리 예산</strong>을 비교해요.
+          </p>
+        </div>
+        {!editing && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="rounded-full border border-cobalt/25 px-4 py-2 text-xs font-semibold text-cobalt transition hover:bg-cobalt/5"
+          >
+            예산 조정
+          </button>
+        )}
+      </div>
+
       <FixedExpensesBreakdown value={fixedExpensesByCategory} readOnly />
 
-      <div className="grid grid-cols-2 gap-3 text-sm">
+      <div className="grid gap-3 text-sm sm:grid-cols-3">
         <div className="rounded-xl bg-ice p-4">
-          <p className="font-bold text-navy/80">가용 예산</p>
-          <p className="font-black text-navy">{formatWonThousand(spendable)}</p>
+          <p className="font-bold text-navy/80">배분 가능 예산</p>
+          <p className="font-black text-navy">{formatWonThousand(budgetLimit)}</p>
           <p className="text-xs text-navy/40">= 예상수입 - 고정지출 - 저축 비용</p>
         </div>
         <div className="rounded-xl bg-ice p-4">
           <p className="font-bold text-navy/80">저축 비용</p>
           <p className="font-black text-navy">{formatWon(progress.saving)}</p>
+        </div>
+        <div className={`rounded-xl p-4 ${allocationOver ? "bg-red-50" : "bg-cobalt/5"}`}>
+          <p className="font-bold text-navy/80">{allocationOver ? "예산 초과" : "아직 배분하지 않은 금액"}</p>
+          <p className={`font-black ${allocationOver ? "text-red-500" : "text-cobalt"}`}>
+            {formatWon(Math.abs(allocationBalance))}
+          </p>
+          <p className="text-xs text-navy/40">현재 배분 합계 {formatWon(allocatedTotal)}</p>
         </div>
       </div>
 
@@ -267,29 +362,84 @@ function BudgetProgressView({
 
       <div className="flex flex-col gap-4">
         {CATEGORIES.map((category) => {
-          const confirmedAmount = progress.allocations[category] ?? 0;
+          const confirmedAmount = allocations[category] ?? 0;
           const spent = progress.spentByCategory[category] ?? 0;
           const pct = confirmedAmount > 0 ? (spent / confirmedAmount) * 100 : 0;
-          const over = pct > 100;
+          const over = spent > confirmedAmount;
+          const remaining = confirmedAmount - spent;
           return (
-            <div key={category}>
-              <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="font-medium text-navy">
-                  {category} · {formatWon(spent)}
-                </span>
-                <span className="text-navy/70">{formatWon(confirmedAmount)}</span>
+            <div key={category} className="rounded-xl border border-card-border p-4">
+              <p className="font-bold text-navy">{category}</p>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-navy/45">실제 사용액</p>
+                  <p className="mt-0.5 font-semibold text-navy">{formatWon(spent)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-navy/45">설정 예산</p>
+                  {editing ? (
+                    <div className="mt-1 flex items-center gap-1 rounded-lg border border-cobalt/25 bg-white px-2.5 focus-within:border-cobalt">
+                      <input
+                        type="number"
+                        min={0}
+                        step={1_000}
+                        aria-label={`${category} 설정 예산`}
+                        value={confirmedAmount}
+                        onChange={(event) => onChange(category, Math.max(0, Number(event.target.value)))}
+                        className="min-w-0 flex-1 bg-transparent py-2 text-right font-semibold text-navy outline-none"
+                      />
+                      <span className="text-xs text-navy/50">원</span>
+                    </div>
+                  ) : (
+                    <p className="mt-0.5 font-semibold text-cobalt">{formatWon(confirmedAmount)}</p>
+                  )}
+                </div>
               </div>
-              <div className="h-2 w-full rounded-full bg-ice">
+              <div className="mt-3 h-2 w-full rounded-full bg-ice">
                 <div
                   className={`h-2 rounded-full ${over ? "bg-red-400" : "bg-cobalt"}`}
                   style={{ width: `${Math.min(pct, 100)}%` }}
                 />
               </div>
-              <p className={`mt-1 text-xs ${over ? "text-red-500" : "text-navy/50"}`}>{pct.toFixed(0)}% 사용</p>
+              <div className="mt-2 flex flex-wrap justify-between gap-1 text-xs">
+                <p className={over ? "font-semibold text-red-500" : "text-navy/50"}>
+                  {confirmedAmount <= 0 && spent > 0 ? "설정된 예산 없음" : `${pct.toFixed(0)}% 사용`}
+                </p>
+                <p className={over ? "font-semibold text-red-500" : "text-navy/50"}>
+                  {over ? `${formatWon(Math.abs(remaining))} 초과` : `${formatWon(remaining)} 남음`}
+                </p>
+              </div>
             </div>
           );
         })}
       </div>
+
+      {editing && (
+        <div className="flex flex-wrap items-center gap-2 border-t border-card-border pt-4">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={confirming || allocationOver}
+            className="rounded-full bg-cobalt px-5 py-2.5 text-xs font-semibold text-white disabled:opacity-50"
+          >
+            {confirming ? "저장하는 중..." : "조정 내용 저장"}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={confirming}
+            className="rounded-full px-4 py-2.5 text-xs font-medium text-navy/60 disabled:opacity-50"
+          >
+            취소
+          </button>
+          <p className={`basis-full text-xs ${allocationOver ? "font-semibold text-red-500" : "text-navy/50"}`}>
+            {allocationOver
+              ? `배분 가능 예산보다 ${formatWon(Math.abs(allocationBalance))} 많아요. 다른 카테고리 예산을 줄여주세요.`
+              : "저장하면 구매 시뮬레이션에도 바로 반영돼요."}
+          </p>
+          {error && <p className="basis-full text-xs text-red-500">{error}</p>}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,16 +1,15 @@
 import { buildProfiledSources } from "@/core/sourcePipeline";
 import { forecastIncome, type ForecastSourceInput } from "@/core/forecast";
 import { hashSeed } from "@/core/stats";
-import { monthStart, toMonthKey } from "@/core/dateUtils";
+import { toMonthKey } from "@/core/dateUtils";
 import type { IncomeCategory } from "@/core/classify";
-import { sumSpendByCategory } from "@/core/classifyExpense";
-import { OVERDUE_ALERT_CATEGORIES, type ExpenseCategory } from "@/config";
+import { OVERDUE_ALERT_CATEGORIES } from "@/config";
 import { loadIncomeTransactionsAndRules, loadTerminatedSourceIds } from "@/lib/incomeData";
+import { getConfirmedBudgetProgress } from "@/lib/confirmedBudget";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
-import { logout } from "@/lib/authActions";
 import { SourceStatusBadge } from "@/components/SourceStatusBadge";
-import { BudgetPlanner, type ConfirmedProgress } from "@/components/BudgetPlanner";
+import { BudgetPlanner } from "@/components/BudgetPlanner";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { formatWon, formatWonThousand } from "@/lib/format";
 
@@ -35,23 +34,8 @@ export default async function Home() {
   const preference = await prisma.userPreference.findUnique({ where: { userId } });
 
   return (
-    <div className="flex flex-col flex-1">
-      <header className="flex items-center justify-between bg-navy px-6 py-5 text-white">
-        <h1 className="text-lg font-extrabold">UniPig</h1>
-        <form action={logout}>
-          <button type="submit" className="text-sm font-medium text-white/70">
-            로그아웃
-          </button>
-        </form>
-      </header>
-
-      <main className="flex-1 bg-ice px-6 py-8">
-        {!preference ? (
-          <OnboardingWizard />
-        ) : (
-          <BudgetContent userId={userId} />
-        )}
-      </main>
+    <div className="flex flex-1 flex-col bg-ice px-6 py-8">
+      {!preference ? <OnboardingWizard /> : <BudgetContent userId={userId} />}
     </div>
   );
 }
@@ -78,21 +62,7 @@ async function BudgetContent({ userId }: { userId: string }) {
   const seed = hashSeed(`${userId}:${targetMonth}`);
   const forecast = forecastIncome(forecastSources, targetMonth, seed);
 
-  const confirmedPlan = await prisma.budgetPlan.findFirst({
-    where: { userId, targetMonth, status: "CONFIRMED" },
-  });
-  let confirmedProgress: ConfirmedProgress | null = null;
-  if (confirmedPlan) {
-    const monthTransactions = await prisma.transaction.findMany({
-      where: { userId, occurredAt: { gte: monthStart(targetMonth), lte: new Date() } },
-    });
-    confirmedProgress = {
-      baseIncome: confirmedPlan.baseIncome,
-      saving: confirmedPlan.saving,
-      allocations: confirmedPlan.allocations as Record<ExpenseCategory, number>,
-      spentByCategory: sumSpendByCategory(monthTransactions),
-    };
-  }
+  const confirmedProgress = await getConfirmedBudgetProgress(userId, targetMonth);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-10">
@@ -113,6 +83,24 @@ async function BudgetContent({ userId }: { userId: string }) {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-black text-navy">{targetMonthNum}월 맞춤 예산안</h2>
+        <div className="rounded-2xl border border-cobalt/10 bg-white p-5 text-navy shadow-sm">
+          <p className="text-sm font-extrabold">예산관리는 이렇게 예산을 만들어요</p>
+          <div className="mt-3 grid gap-2 text-xs leading-relaxed text-navy/60 sm:grid-cols-3">
+            <p className="rounded-xl bg-ice p-3">
+              <strong className="mb-1 block text-cobalt">1. 예상 수입 계산</strong>
+              과거 입금 주기와 금액으로 이번 달 수입을 안전하게 예상해요.
+            </p>
+            <p className="rounded-xl bg-ice p-3">
+              <strong className="mb-1 block text-cobalt">2. 쓸 수 있는 돈 확인</strong>
+              예상 수입에서 고정지출과 저축 비용을 먼저 제외해요.
+            </p>
+            <p className="rounded-xl bg-ice p-3">
+              <strong className="mb-1 block text-cobalt">3. 카테고리별 배분</strong>
+              과거 소비 패턴을 참고해 식비·쇼핑 등의 예산을 제안해요.
+            </p>
+          </div>
+          <p className="mt-3 text-xs text-navy/45">AI 제안은 시작점이에요. 아래에서 생활 방식에 맞게 직접 조정할 수 있어요.</p>
+        </div>
         <BudgetPlanner targetMonth={targetMonth} confirmedProgress={confirmedProgress} />
       </section>
 

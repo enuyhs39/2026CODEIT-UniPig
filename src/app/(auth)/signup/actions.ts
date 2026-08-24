@@ -45,5 +45,5 @@ export async function signup(_state: SignupFormState, formData: FormData): Promi
     return { error: "가입은 완료됐지만 로그인에 실패했어요. 로그인 화면에서 다시 시도해주세요" };
   }
 
-  redirect("/budget");
+  redirect("/");
 }
