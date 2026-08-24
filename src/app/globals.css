@@ -43,7 +43,7 @@
 
   /* 홈 화면 지출 구성 차트 전용 — 메인 팔레트(네이비/코발트/버터)에서 파생 */
   --chart-food: #304860;
-  --chart-cafe: #8a6d1d;
+  --chart-cafe: #e0c93a;
   --chart-shopping: #4f7396;
   --chart-transport: #7da7d9;
   --chart-other: #a9c3dc;
@@ -213,7 +213,7 @@
   --tag-red-text: #dd463c;
 
   --chart-food: #304860;
-  --chart-cafe: #8a6d1d;
+  --chart-cafe: #e0c93a;
   --chart-shopping: #4f7396;
   --chart-transport: #7da7d9;
   --chart-other: #a9c3dc;
