@@ -4,6 +4,7 @@ import { sumSpendByCategory } from "@/core/classifyExpense";
 import type { ExpenseCategory } from "@/config";
 
 export type ConfirmedBudgetProgress = {
+  planId: string;
   baseIncome: number;
   saving: number;
   allocations: Record<ExpenseCategory, number>;
@@ -25,6 +26,7 @@ export async function getConfirmedBudgetProgress(
   });
 
   return {
+    planId: confirmedPlan.id,
     baseIncome: confirmedPlan.baseIncome,
     saving: confirmedPlan.saving,
     allocations: confirmedPlan.allocations as Record<ExpenseCategory, number>,

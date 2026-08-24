@@ -2,6 +2,7 @@ import { toMonthKey } from "@/core/dateUtils";
 import { getConfirmedBudgetProgress } from "@/lib/confirmedBudget";
 import { requireUserId } from "@/lib/session";
 import { PurchaseSimulator } from "@/components/PurchaseSimulator";
+import Link from "next/link";
 
 export default async function SimulationPage() {
   const userId = await requireUserId();
@@ -15,6 +16,9 @@ export default async function SimulationPage() {
         <p className="text-[12.5px]">
           이번 달 확정된 예산이 없어서 시뮬레이션할 수 없어요. AI피그에서 예산을 먼저 확정해주세요.
         </p>
+        <Link href="/budget" className="mt-2 rounded-full bg-cobalt px-5 py-2.5 text-[12.5px] font-semibold text-white">
+          AI피그에서 예산 설정
+        </Link>
       </div>
     );
   }

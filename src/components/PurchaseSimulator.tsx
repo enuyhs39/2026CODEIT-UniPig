@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { ExpenseCategory } from "@/config";
 import { simulatePurchase, type SimulateBudgetProgress } from "@/core/simulatePurchase";
 import { formatWon } from "@/lib/format";
@@ -15,10 +16,23 @@ export function PurchaseSimulator({ progress }: { progress: SimulateBudgetProgre
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-[17px] font-bold">구매 시뮬레이션</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-[17px] font-bold">구매 시뮬레이션</h1>
+        <Link
+          href="/budget"
+          className="rounded-full border border-cobalt/25 bg-white px-4 py-2 text-[12.5px] font-semibold text-cobalt shadow-sm transition hover:bg-cobalt/5"
+        >
+          예산 조정
+        </Link>
+      </div>
       <p className="text-[12.5px] text-muted-foreground">
         사려는 물건의 카테고리와 금액을 입력하면, 이번 달 확정 예산 안에서 살 수 있는지 바로 보여줘요.
       </p>
+
+      <div className="rounded-xl border border-cobalt/15 bg-cobalt/5 px-4 py-3 text-[12.5px] text-muted-foreground">
+        이 시뮬레이션은 <strong className="font-semibold text-foreground">AI피그에서 확정한 이번 달 카테고리별 예산</strong>을
+        기준으로 계산해요.
+      </div>
 
       <div className="flex flex-col gap-4 rounded-2xl bg-card p-4 shadow-sm">
         <div className="flex flex-wrap gap-2">

@@ -83,6 +83,24 @@ async function BudgetContent({ userId }: { userId: string }) {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-black text-navy">{targetMonthNum}월 맞춤 예산안</h2>
+        <div className="rounded-2xl border border-cobalt/10 bg-white p-5 text-navy shadow-sm">
+          <p className="text-sm font-extrabold">AI피그는 이렇게 예산을 만들어요</p>
+          <div className="mt-3 grid gap-2 text-xs leading-relaxed text-navy/60 sm:grid-cols-3">
+            <p className="rounded-xl bg-ice p-3">
+              <strong className="mb-1 block text-cobalt">1. 예상 수입 계산</strong>
+              과거 입금 주기와 금액으로 이번 달 수입을 안전하게 예상해요.
+            </p>
+            <p className="rounded-xl bg-ice p-3">
+              <strong className="mb-1 block text-cobalt">2. 쓸 수 있는 돈 확인</strong>
+              예상 수입에서 고정지출과 저축 비용을 먼저 제외해요.
+            </p>
+            <p className="rounded-xl bg-ice p-3">
+              <strong className="mb-1 block text-cobalt">3. 카테고리별 배분</strong>
+              과거 소비 패턴을 참고해 식비·쇼핑 등의 예산을 제안해요.
+            </p>
+          </div>
+          <p className="mt-3 text-xs text-navy/45">AI 제안은 시작점이에요. 아래에서 생활 방식에 맞게 직접 조정할 수 있어요.</p>
+        </div>
         <BudgetPlanner targetMonth={targetMonth} confirmedProgress={confirmedProgress} />
       </section>
 
