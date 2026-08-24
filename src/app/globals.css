@@ -4,6 +4,38 @@
 :root {
   --background: #dceeff;
   --foreground: #2f4860;
+  --muted-foreground: #5d7592;
+  --card: #ffffff;
+  --card-border: #c6e0f3;
+  --accent: #7da7d9;
+  --accent-soft: #e6f1fb;
+  --gold: #8a6d1d;
+  --gold-soft: #fff7cc;
+  --success: #2e8b67;
+  --danger: #b5524a;
+  --track: #d3e7f7;
+
+  --tag-default-bg: #eef2f6;
+  --tag-default-text: #5d7592;
+  --tag-gray-bg: #e3e5e8;
+  --tag-gray-text: #5b6270;
+  --tag-brown-bg: #ece1d8;
+  --tag-brown-text: #8a5a3c;
+  --tag-orange-bg: #faebdd;
+  --tag-orange-text: #b3691d;
+  --tag-yellow-bg: #fff7cc;
+  --tag-yellow-text: #8a6d1d;
+  --tag-green-bg: #dcefe4;
+  --tag-green-text: #2e8b67;
+  --tag-blue-bg: #e6f1fb;
+  --tag-blue-text: #3873a8;
+  --tag-purple-bg: #ebe4f6;
+  --tag-purple-text: #6a3fb5;
+  --tag-pink-bg: #fbe3ef;
+  --tag-pink-text: #b8478e;
+  --tag-red-bg: #fbe4e4;
+  --tag-red-text: #b5524a;
+
   --color-navy: #2f4860;
   --color-cobalt: #7da7d9;
   --color-butter: #fff7cc;
@@ -13,6 +45,36 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-border: var(--card-border);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-track: var(--track);
+  --color-tag-default-bg: var(--tag-default-bg);
+  --color-tag-default-text: var(--tag-default-text);
+  --color-tag-gray-bg: var(--tag-gray-bg);
+  --color-tag-gray-text: var(--tag-gray-text);
+  --color-tag-brown-bg: var(--tag-brown-bg);
+  --color-tag-brown-text: var(--tag-brown-text);
+  --color-tag-orange-bg: var(--tag-orange-bg);
+  --color-tag-orange-text: var(--tag-orange-text);
+  --color-tag-yellow-bg: var(--tag-yellow-bg);
+  --color-tag-yellow-text: var(--tag-yellow-text);
+  --color-tag-green-bg: var(--tag-green-bg);
+  --color-tag-green-text: var(--tag-green-text);
+  --color-tag-blue-bg: var(--tag-blue-bg);
+  --color-tag-blue-text: var(--tag-blue-text);
+  --color-tag-purple-bg: var(--tag-purple-bg);
+  --color-tag-purple-text: var(--tag-purple-text);
+  --color-tag-pink-bg: var(--tag-pink-bg);
+  --color-tag-pink-text: var(--tag-pink-text);
+  --color-tag-red-bg: var(--tag-red-bg);
+  --color-tag-red-text: var(--tag-red-text);
   --color-navy: var(--color-navy);
   --color-cobalt: var(--color-cobalt);
   --color-butter: var(--color-butter);
@@ -21,8 +83,119 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #16222c;
+    --foreground: #eaf3fb;
+    --muted-foreground: #93acc2;
+    --card: #223244;
+    --card-border: #33475c;
+    --accent: #8fbbe6;
+    --accent-soft: #26394c;
+    --gold: #f0d876;
+    --gold-soft: #3a331a;
+    --success: #5fc79a;
+    --danger: #e08578;
+    --track: #2c3d4f;
+
+    --tag-default-bg: #263241;
+    --tag-default-text: #9fb4c9;
+    --tag-gray-bg: #343b45;
+    --tag-gray-text: #a7adb8;
+    --tag-brown-bg: #3a2f27;
+    --tag-brown-text: #c99b78;
+    --tag-orange-bg: #402c17;
+    --tag-orange-text: #e2a35c;
+    --tag-yellow-bg: #3a331a;
+    --tag-yellow-text: #f0d876;
+    --tag-green-bg: #1d3329;
+    --tag-green-text: #5fc79a;
+    --tag-blue-bg: #23364a;
+    --tag-blue-text: #8fbbe6;
+    --tag-purple-bg: #2e2740;
+    --tag-purple-text: #b79cf0;
+    --tag-pink-bg: #3d2432;
+    --tag-pink-text: #e590c1;
+    --tag-red-bg: #3a2320;
+    --tag-red-text: #e08578;
+  }
+}
+
+/* 마이페이지 다크모드 토글로 시스템 설정을 덮어쓸 때 쓰는 명시적 테마 (첨부: mypage/theme-toggle.tsx) */
+:root[data-theme="dark"] {
+  --background: #16222c;
+  --foreground: #eaf3fb;
+  --muted-foreground: #93acc2;
+  --card: #223244;
+  --card-border: #33475c;
+  --accent: #8fbbe6;
+  --accent-soft: #26394c;
+  --gold: #f0d876;
+  --gold-soft: #3a331a;
+  --success: #5fc79a;
+  --danger: #e08578;
+  --track: #2c3d4f;
+
+  --tag-default-bg: #263241;
+  --tag-default-text: #9fb4c9;
+  --tag-gray-bg: #343b45;
+  --tag-gray-text: #a7adb8;
+  --tag-brown-bg: #3a2f27;
+  --tag-brown-text: #c99b78;
+  --tag-orange-bg: #402c17;
+  --tag-orange-text: #e2a35c;
+  --tag-yellow-bg: #3a331a;
+  --tag-yellow-text: #f0d876;
+  --tag-green-bg: #1d3329;
+  --tag-green-text: #5fc79a;
+  --tag-blue-bg: #23364a;
+  --tag-blue-text: #8fbbe6;
+  --tag-purple-bg: #2e2740;
+  --tag-purple-text: #b79cf0;
+  --tag-pink-bg: #3d2432;
+  --tag-pink-text: #e590c1;
+  --tag-red-bg: #3a2320;
+  --tag-red-text: #e08578;
+}
+
+:root[data-theme="light"] {
+  --background: #dceeff;
+  --foreground: #2f4860;
+  --muted-foreground: #5d7592;
+  --card: #ffffff;
+  --card-border: #c6e0f3;
+  --accent: #7da7d9;
+  --accent-soft: #e6f1fb;
+  --gold: #8a6d1d;
+  --gold-soft: #fff7cc;
+  --success: #2e8b67;
+  --danger: #b5524a;
+  --track: #d3e7f7;
+
+  --tag-default-bg: #eef2f6;
+  --tag-default-text: #5d7592;
+  --tag-gray-bg: #e3e5e8;
+  --tag-gray-text: #5b6270;
+  --tag-brown-bg: #ece1d8;
+  --tag-brown-text: #8a5a3c;
+  --tag-orange-bg: #faebdd;
+  --tag-orange-text: #b3691d;
+  --tag-yellow-bg: #fff7cc;
+  --tag-yellow-text: #8a6d1d;
+  --tag-green-bg: #dcefe4;
+  --tag-green-text: #2e8b67;
+  --tag-blue-bg: #e6f1fb;
+  --tag-blue-text: #3873a8;
+  --tag-purple-bg: #ebe4f6;
+  --tag-purple-text: #6a3fb5;
+  --tag-pink-bg: #fbe3ef;
+  --tag-pink-text: #b8478e;
+  --tag-red-bg: #fbe4e4;
+  --tag-red-text: #b5524a;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Pretendard", Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
 }
