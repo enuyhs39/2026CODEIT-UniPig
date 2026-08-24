@@ -168,12 +168,16 @@ export function buildBudget(input: BudgetInput): BudgetResult {
 
   const allocationSum = categories.reduce((sum, c) => sum + allocations[c], 0);
 
+  // "가용예산" 카드는 화면에 표시되는 반올림된 저축액 기준으로 계산해야
+  // "예상수입 - 고정지출 - 저축" 표시값과 정확히 맞는다(disposable = roundedSaving + spendable 보존).
+  const roundedSaving = roundToUnit(saving, BUDGET_ROUNDING_UNIT);
+
   return {
     status: "DRAFT",
     baseIncome,
     disposable,
-    saving: roundToUnit(saving, BUDGET_ROUNDING_UNIT),
-    spendable,
+    saving: roundedSaving,
+    spendable: disposable - roundedSaving,
     allocations: roundAllocationsToTarget(allocations, allocationSum),
   };
 }

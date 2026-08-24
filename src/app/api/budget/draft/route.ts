@@ -85,5 +85,5 @@ export async function POST(request: Request) {
     ? await prisma.budgetPlan.update({ where: { id: existing.id }, data: planData })
     : await prisma.budgetPlan.create({ data: planData });
 
-  return NextResponse.json(plan);
+  return NextResponse.json({ ...plan, spendable: result.spendable });
 }
