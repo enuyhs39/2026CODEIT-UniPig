@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { PALETTE_BADGE_CLASSES } from "@/lib/categoryColors";
 import { AddEntryToolbar } from "@/components/transactions/add-entry-toolbar";
 import { TransactionDonutChart } from "@/components/transactions/transaction-donut-chart";
+import { TransactionCategoryBoard } from "@/components/transactions/transaction-category-board";
 import { deleteLedgerEntry, toggleLedgerEntryDone } from "./actions";
 import type { LedgerEntryType } from "@/generated/prisma/enums";
 import type { TransactionChartStatus } from "@/lib/transactionChart";
@@ -39,9 +40,11 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   const sort = params.sort === "asc" ? "asc" : "desc";
   const fromRaw = typeof params.from === "string" ? params.from : "";
   const toRaw = typeof params.to === "string" ? params.to : "";
+  const categoryRaw = typeof params.category === "string" ? params.category : "";
   const typeTab: TypeTab = params.type === "income" ? "income" : params.type === "all" ? "all" : "expense";
   const chartStatus: TransactionChartStatus | undefined =
     typeTab !== "all" && (params.chart === "pending" || params.chart === "done") ? params.chart : undefined;
+  const categoryBoardOpen = typeTab !== "all" && params.board === "category";
   const typeFilter: LedgerEntryType | undefined =
     typeTab === "expense" ? "EXPENSE" : typeTab === "income" ? "INCOME" : undefined;
 
@@ -56,27 +59,37 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
     ? new Date(new Date(toRaw).getTime() + 24 * 60 * 60 * 1000)
     : new Date(Date.UTC(year, month, 1));
 
-  const [entries, categories] = await Promise.all([
-    prisma.ledgerEntry.findMany({
-      where: { userId, date: { gte: rangeStart, lt: rangeEnd }, ...(typeFilter ? { type: typeFilter } : {}) },
-      orderBy: { date: sort },
-      include: { category: true },
-    }),
-    prisma.ledgerCategory.findMany({
-      where: { userId },
-      orderBy: { sortOrder: "asc" },
-    }),
-  ]);
+  const categories = await prisma.ledgerCategory.findMany({
+    where: { userId },
+    orderBy: { sortOrder: "asc" },
+  });
+  const filterCategories = categories.filter((category) => !typeFilter || category.type === typeFilter);
+  const selectedCategory = filterCategories.find((category) => category.id === categoryRaw);
+  const selectedCategoryId = selectedCategory?.id ?? "";
+  const entries = await prisma.ledgerEntry.findMany({
+    where: {
+      userId,
+      date: { gte: rangeStart, lt: rangeEnd },
+      ...(typeFilter ? { type: typeFilter } : {}),
+      ...(selectedCategoryId ? { categoryId: selectedCategoryId } : {}),
+    },
+    orderBy: { date: sort },
+    include: { category: true },
+  });
 
   const typeLabel = typeTab === "expense" ? "지출" : typeTab === "income" ? "수입" : "지출/수입";
   const title = hasCustomRange ? `${fromRaw} ~ ${toRaw} ${typeLabel} 내역` : `${month}월 ${typeLabel} 내역`;
   const otherSort = sort === "asc" ? "desc" : "asc";
-  const baseQuery = hasCustomRange ? `from=${fromRaw}&to=${toRaw}` : `month=${month}`;
-  const sortQuery = `${baseQuery}&type=${typeTab}${chartStatus ? `&chart=${chartStatus}` : ""}`;
+  const dateQuery = hasCustomRange ? `from=${fromRaw}&to=${toRaw}` : `month=${month}`;
+  const baseQuery = `${dateQuery}${selectedCategoryId ? `&category=${selectedCategoryId}` : ""}`;
+  const boardQuery = categoryBoardOpen ? "&board=category" : "";
+  const sortQuery = `${baseQuery}&type=${typeTab}${chartStatus ? `&chart=${chartStatus}` : ""}${boardQuery}`;
   const chartEntryType: LedgerEntryType | undefined =
     typeTab === "expense" ? "EXPENSE" : typeTab === "income" ? "INCOME" : undefined;
   const chartCategories = chartEntryType
-    ? categories.filter((category) => category.type === chartEntryType)
+    ? categories.filter(
+        (category) => category.type === chartEntryType && (!selectedCategoryId || category.id === selectedCategoryId),
+      )
     : [];
   const chartEntries = entries
     .filter((entry) => entry.type === chartEntryType)
@@ -95,44 +108,82 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
         <h1 className="text-[19px] font-extrabold text-foreground">{title}</h1>
       </div>
 
-      <div className="flex items-center gap-1.5">
-        {TYPE_TABS.map((tab) => (
-          <Link
-            key={tab.value}
-            href={`?${baseQuery}&sort=${sort}&type=${tab.value}`}
-            className={cn(
-              "rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors",
-              typeTab === tab.value
-                ? "bg-accent text-white"
-                : "border border-card-border text-muted-foreground hover:border-accent hover:text-accent",
-            )}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </div>
-
-      {typeTab !== "all" && (
-        <div className="flex items-center gap-1.5">
-          {([
-            { value: "pending", label: `${typeLabel} 예정` },
-            { value: "done", label: `${typeLabel} 완료` },
-          ] as const).map((item) => (
+      <nav aria-label="거래 내역 보기" className="flex flex-col items-start gap-3">
+        <div className="inline-flex items-center gap-1 rounded-xl border border-card-border bg-card p-1 shadow-sm">
+          {TYPE_TABS.map((tab) => (
             <Link
-              key={item.value}
-              href={`?${baseQuery}&sort=${sort}&type=${typeTab}&chart=${item.value}`}
+              key={tab.value}
+              href={`?${dateQuery}&sort=${sort}&type=${tab.value}${
+                selectedCategory &&
+                (tab.value === "all" ||
+                  selectedCategory.type === (tab.value === "expense" ? "EXPENSE" : "INCOME"))
+                  ? `&category=${selectedCategory.id}`
+                  : ""
+              }${categoryBoardOpen && tab.value !== "all" ? "&board=category" : ""}`}
+              aria-current={typeTab === tab.value ? "page" : undefined}
               className={cn(
-                "rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors",
-                chartStatus === item.value
-                  ? "bg-foreground text-background"
-                  : "border border-card-border text-muted-foreground hover:border-accent hover:text-accent",
+                "rounded-lg px-4 py-2 text-[12.5px] font-semibold transition-colors",
+                typeTab === tab.value
+                  ? "bg-accent text-white shadow-sm"
+                  : "text-muted-foreground hover:bg-accent-soft hover:text-accent",
               )}
             >
-              {item.label}
+              {tab.label}
             </Link>
           ))}
         </div>
-      )}
+
+        {typeTab !== "all" && (
+          <div className="flex w-full flex-wrap items-center gap-3 pl-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-muted-foreground">{typeLabel} 상태</span>
+              <div className="inline-flex items-center gap-0.5 rounded-lg bg-accent-soft p-1">
+                {([
+                  { value: "pending", label: "예정" },
+                  { value: "done", label: "완료" },
+                ] as const).map((item) => (
+                  <Link
+                    key={item.value}
+                    href={`?${baseQuery}&sort=${sort}&type=${typeTab}${
+                      chartStatus === item.value ? "" : `&chart=${item.value}`
+                    }${boardQuery}`}
+                    aria-expanded={chartStatus === item.value}
+                    aria-controls="transaction-status-chart"
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-[11.5px] font-semibold transition-colors",
+                      chartStatus === item.value
+                        ? "bg-card text-accent shadow-sm"
+                        : "text-muted-foreground hover:text-accent",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <Link
+              href={`?${baseQuery}&sort=${sort}&type=${typeTab}${chartStatus ? `&chart=${chartStatus}` : ""}${
+                categoryBoardOpen ? "" : "&board=category"
+              }`}
+              aria-expanded={categoryBoardOpen}
+              aria-controls="transaction-category-board"
+              className={cn(
+                "ml-auto flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11.5px] font-semibold transition-colors",
+                categoryBoardOpen
+                  ? "border-accent bg-accent text-white shadow-sm"
+                  : "border-card-border bg-card text-muted-foreground hover:border-accent hover:text-accent",
+              )}
+            >
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="4" width="7" height="16" rx="1.5" />
+                <rect x="14" y="4" width="7" height="10" rx="1.5" />
+              </svg>
+              카테고리
+            </Link>
+          </div>
+        )}
+      </nav>
 
       <AddEntryToolbar
         sortLabel={`날짜 ${sort === "desc" ? "최신순 ↓" : "오래된순 ↑"}`}
@@ -140,25 +191,51 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
         fromValue={fromRaw || toDateInputValue(rangeStart)}
         toValue={toRaw}
         hasCustomRange={hasCustomRange}
-        resetHref={`?month=${month}&type=${typeTab}${chartStatus ? `&chart=${chartStatus}` : ""}`}
+        resetHref={`?month=${month}&type=${typeTab}${chartStatus ? `&chart=${chartStatus}` : ""}${boardQuery}`}
         categories={categories}
+        filterCategories={filterCategories}
+        selectedCategoryId={selectedCategoryId}
         defaultDate={toDateInputValue(now)}
         defaultType={typeTab === "income" ? "INCOME" : "EXPENSE"}
         typeTabValue={typeTab}
         chartStatus={chartStatus}
+        sortValue={sort}
+        monthValue={month}
+        categoryBoardOpen={categoryBoardOpen}
       />
 
       {typeTab !== "all" && chartStatus && chartCategories.length > 0 && (
-        <TransactionDonutChart
-          categories={chartCategories.map((category) => ({
+        <div id="transaction-status-chart">
+          <TransactionDonutChart
+            categories={chartCategories.map((category) => ({
+              id: category.id,
+              label: category.label,
+              color: category.color,
+            }))}
+            entries={chartEntries}
+            rangeLabel={chartRangeLabel}
+            status={chartStatus}
+            type={typeTab}
+          />
+        </div>
+      )}
+
+      {typeTab !== "all" && categoryBoardOpen && (
+        <TransactionCategoryBoard
+          categories={filterCategories.map((category) => ({
             id: category.id,
             label: category.label,
             color: category.color,
           }))}
-          entries={chartEntries}
-          rangeLabel={chartRangeLabel}
-          status={chartStatus}
-          type={typeTab}
+          entries={entries.map((entry) => ({
+            id: entry.id,
+            categoryId: entry.categoryId,
+            description: entry.description,
+            amount: entry.amount,
+            date: entry.date,
+            isDone: entry.isDone,
+          }))}
+          type={typeFilter!}
         />
       )}
 
