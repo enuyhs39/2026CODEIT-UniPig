@@ -2,18 +2,18 @@
 @import "pretendard/dist/web/static/pretendard.css";
 
 :root {
-  --background: #dceeff;
-  --foreground: #2f4860;
-  --muted-foreground: #5d7592;
+  --background: #f5f9fe;
+  --foreground: #17375a;
+  --muted-foreground: #647b93;
   --card: #ffffff;
-  --card-border: #c6e0f3;
-  --accent: #7da7d9;
-  --accent-soft: #e6f1fb;
-  --gold: #8a6d1d;
-  --gold-soft: #fff8cc;
-  --success: #2e8b67;
-  --danger: #b5524a;
-  --track: #d3e7f7;
+  --card-border: #d9e5f2;
+  --accent: #0067e8;
+  --accent-soft: #d8e9ff;
+  --gold: #0067e8;
+  --gold-soft: #d8e9ff;
+  --success: #31975d;
+  --danger: #d7655d;
+  --track: #dfebf8;
 
   --tag-default-bg: #eef1f8;
   --tag-default-text: #5b6b8c;
@@ -36,17 +36,17 @@
   --tag-red-bg: #fde1df;
   --tag-red-text: #dd463c;
 
-  --color-navy: #2f4860;
-  --color-cobalt: #7da7d9;
-  --color-butter: #fff7cc;
-  --color-ice: #dceeff;
+  --color-navy: #17375a;
+  --color-cobalt: #0067e8;
+  --color-butter: #d8e9ff;
+  --color-ice: #f5f9fe;
 
   /* 홈 화면 지출 구성 차트 전용 — 메인 팔레트(네이비/코발트/버터)에서 파생 */
-  --chart-food: #304860;
-  --chart-cafe: #e0c93a;
-  --chart-shopping: #4f7396;
-  --chart-transport: #7da7d9;
-  --chart-other: #a9c3dc;
+  --chart-food: #003f91;
+  --chart-cafe: #0067e8;
+  --chart-shopping: #2f83eb;
+  --chart-transport: #69a8f1;
+  --chart-other: #b5d4f8;
 }
 
 @theme inline {
@@ -92,18 +92,18 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #16222c;
-    --foreground: #eaf3fb;
-    --muted-foreground: #93acc2;
-    --card: #223244;
-    --card-border: #33475c;
-    --accent: #8fbbe6;
-    --accent-soft: #26394c;
-    --gold: #f0d876;
-    --gold-soft: #3a331a;
-    --success: #5fc79a;
-    --danger: #e08578;
-    --track: #2c3d4f;
+    --background: #0f1a24;
+    --foreground: #eaf4fc;
+    --muted-foreground: #91a9bc;
+    --card: #182738;
+    --card-border: #2c4358;
+    --accent: #3d95ff;
+    --accent-soft: #123b68;
+    --gold: #3d95ff;
+    --gold-soft: #123b68;
+    --success: #72d6b0;
+    --danger: #ff8b83;
+    --track: #24394b;
 
     --tag-default-bg: #232c3a;
     --tag-default-text: #9fb0c9;
@@ -126,28 +126,28 @@
     --tag-red-bg: #3a1e1c;
     --tag-red-text: #f16b60;
 
-    --chart-food: #e5edf7;
-    --chart-cafe: #f0d876;
-    --chart-shopping: #a9c3dc;
-    --chart-transport: #8fbbe6;
-    --chart-other: #5b7fa3;
+    --chart-food: #d8e9ff;
+    --chart-cafe: #9dc9ff;
+    --chart-shopping: #68abfa;
+    --chart-transport: #378eed;
+    --chart-other: #176fc7;
   }
 }
 
 /* 마이페이지 다크모드 토글로 시스템 설정을 덮어쓸 때 쓰는 명시적 테마 (첨부: mypage/theme-toggle.tsx) */
 :root[data-theme="dark"] {
-  --background: #16222c;
-  --foreground: #eaf3fb;
-  --muted-foreground: #93acc2;
-  --card: #223244;
-  --card-border: #33475c;
-  --accent: #8fbbe6;
-  --accent-soft: #26394c;
-  --gold: #f0d876;
-  --gold-soft: #3a331a;
-  --success: #5fc79a;
-  --danger: #e08578;
-  --track: #2c3d4f;
+  --background: #0f1a24;
+  --foreground: #eaf4fc;
+  --muted-foreground: #91a9bc;
+  --card: #182738;
+  --card-border: #2c4358;
+  --accent: #3d95ff;
+  --accent-soft: #123b68;
+  --gold: #3d95ff;
+  --gold-soft: #123b68;
+  --success: #72d6b0;
+  --danger: #ff8b83;
+  --track: #24394b;
 
   --tag-default-bg: #232c3a;
   --tag-default-text: #9fb0c9;
@@ -170,26 +170,26 @@
   --tag-red-bg: #3a1e1c;
   --tag-red-text: #f16b60;
 
-  --chart-food: #e5edf7;
-  --chart-cafe: #f0d876;
-  --chart-shopping: #a9c3dc;
-  --chart-transport: #8fbbe6;
-  --chart-other: #5b7fa3;
+  --chart-food: #d8e9ff;
+  --chart-cafe: #9dc9ff;
+  --chart-shopping: #68abfa;
+  --chart-transport: #378eed;
+  --chart-other: #176fc7;
 }
 
 :root[data-theme="light"] {
-  --background: #dceeff;
-  --foreground: #2f4860;
-  --muted-foreground: #5d7592;
+  --background: #f5f9fe;
+  --foreground: #17375a;
+  --muted-foreground: #647b93;
   --card: #ffffff;
-  --card-border: #c6e0f3;
-  --accent: #7da7d9;
-  --accent-soft: #e6f1fb;
-  --gold: #8a6d1d;
-  --gold-soft: #fff8cc;
-  --success: #2e8b67;
-  --danger: #b5524a;
-  --track: #d3e7f7;
+  --card-border: #d9e5f2;
+  --accent: #0067e8;
+  --accent-soft: #d8e9ff;
+  --gold: #0067e8;
+  --gold-soft: #d8e9ff;
+  --success: #31975d;
+  --danger: #d7655d;
+  --track: #dfebf8;
 
   --tag-default-bg: #eef1f8;
   --tag-default-text: #5b6b8c;
@@ -212,11 +212,11 @@
   --tag-red-bg: #fde1df;
   --tag-red-text: #dd463c;
 
-  --chart-food: #304860;
-  --chart-cafe: #e0c93a;
-  --chart-shopping: #4f7396;
-  --chart-transport: #7da7d9;
-  --chart-other: #a9c3dc;
+  --chart-food: #003f91;
+  --chart-cafe: #0067e8;
+  --chart-shopping: #2f83eb;
+  --chart-transport: #69a8f1;
+  --chart-other: #b5d4f8;
 }
 
 body {

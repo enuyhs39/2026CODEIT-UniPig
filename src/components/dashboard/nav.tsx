@@ -58,7 +58,7 @@ export function DashboardNav() {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground",
-                  isActive(pathname, item.href) && "bg-accent-soft text-foreground",
+                  isActive(pathname, item.href) && "bg-accent text-white",
                 )}
               >
                 <Image src={item.icon} alt="" width={20} height={20} className="shrink-0" />
@@ -71,7 +71,7 @@ export function DashboardNav() {
             aria-label="마이페이지"
             className={cn(
               "ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground sm:ml-0",
-              isActive(pathname, MYPAGE_HREF) && "bg-accent-soft text-foreground",
+              isActive(pathname, MYPAGE_HREF) && "bg-accent text-white",
             )}
           >
             <SettingsIcon />
@@ -98,7 +98,7 @@ export function DashboardNav() {
             href={item.href}
             className={cn(
               "flex flex-col items-center gap-0.5 rounded-full px-3 py-1.5 text-[10px] font-medium whitespace-nowrap text-muted-foreground transition-colors",
-              isActive(pathname, item.href) && "bg-accent-soft text-foreground",
+              isActive(pathname, item.href) && "bg-accent text-white",
             )}
           >
             <Image src={item.icon} alt="" width={28} height={28} />
