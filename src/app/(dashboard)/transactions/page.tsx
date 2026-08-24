@@ -112,7 +112,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-card-border bg-card">
+      <div className="overflow-x-auto rounded-2xl bg-card shadow-sm">
         <table className="w-full min-w-[420px] table-fixed border-collapse text-[11.5px]">
           <colgroup>
             <col className="w-10" />
@@ -159,7 +159,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
                       </button>
                     </form>
                   </td>
-                  <td className="whitespace-nowrap px-1.5 py-2 font-mono text-[11px] text-muted-foreground">
+                  <td className="whitespace-nowrap px-1.5 py-2 tabular-nums text-[11px] text-muted-foreground">
                     {formatDate(entry.date)}
                   </td>
                   <td className="px-1.5 py-2">
@@ -185,7 +185,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
                       <span className="truncate">{entry.description}</span>
                     </div>
                   </td>
-                  <td className="truncate px-1.5 py-2 text-right font-mono font-semibold">
+                  <td className="truncate px-1.5 py-2 text-right tabular-nums font-semibold">
                     {formatWon(entry.amount)}
                   </td>
                   <td className="whitespace-nowrap px-1.5 py-2 text-right">

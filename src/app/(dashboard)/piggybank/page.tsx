@@ -37,7 +37,7 @@ export default async function PiggyBankPage() {
             <form
               key={item.id}
               action={updatePiggyBankItem}
-              className="flex flex-col gap-3 rounded-2xl border border-card-border bg-card p-4"
+              className="flex flex-col gap-3 rounded-2xl bg-card p-4 shadow-sm"
             >
               <input type="hidden" name="id" value={item.id} />
 
@@ -81,7 +81,7 @@ export default async function PiggyBankPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-2 font-mono text-[12.5px]">
+              <div className="flex items-center gap-2 tabular-nums text-[12.5px]">
                 <span className="text-muted-foreground">목표</span>
                 <input
                   type="number"
@@ -96,10 +96,10 @@ export default async function PiggyBankPage() {
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-track">
                   <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
                 </div>
-                <span className="font-mono text-[12px] font-bold text-accent">{pct}%</span>
+                <span className="tabular-nums text-[12px] font-bold text-accent">{pct}%</span>
               </div>
 
-              <div className="flex items-center gap-2 font-mono text-[12.5px]">
+              <div className="flex items-center gap-2 tabular-nums text-[12.5px]">
                 <span className="text-muted-foreground">달성</span>
                 <input
                   type="number"

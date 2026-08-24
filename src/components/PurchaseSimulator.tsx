@@ -20,7 +20,7 @@ export function PurchaseSimulator({ progress }: { progress: SimulateBudgetProgre
         사려는 물건의 카테고리와 금액을 입력하면, 이번 달 확정 예산 안에서 살 수 있는지 바로 보여줘요.
       </p>
 
-      <div className="flex flex-col gap-4 rounded-2xl border border-card-border bg-card p-4">
+      <div className="flex flex-col gap-4 rounded-2xl bg-card p-4 shadow-sm">
         <div className="flex flex-wrap gap-2">
           <select
             value={category}

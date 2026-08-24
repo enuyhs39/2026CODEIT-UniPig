@@ -35,7 +35,7 @@ function SummaryStat({
   signed?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-card-border bg-card px-3 py-3">
+    <div className="rounded-2xl bg-card px-3 py-3 shadow-sm">
       <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
       <p className={cn("mt-1 truncate text-[13.5px] font-extrabold", tone === "success" ? "text-success" : "text-danger")}>
         {signed ? (value >= 0 ? "+" : "-") : ""}
@@ -107,7 +107,7 @@ export default async function HomePage() {
       </div>
 
       {categoryBreakdown.length > 0 && (
-        <div className="rounded-2xl border border-card-border bg-card p-4">
+        <div className="rounded-2xl bg-card p-4 shadow-sm">
           <p className="mb-2.5 text-[12px] font-bold text-muted-foreground">{currentMonth}월 지출 구성</p>
           <div className="flex h-2.5 overflow-hidden rounded-full bg-track">
             {categoryBreakdown.map((c) => (
@@ -128,7 +128,7 @@ export default async function HomePage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-card-border bg-card">
+      <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
         <div className="border-b border-card-border px-4 py-2.5 text-[12px] font-semibold text-muted-foreground">
           {year}년
         </div>
@@ -151,7 +151,7 @@ export default async function HomePage() {
                       이번 달
                     </span>
                   )}
-                  <span className="ml-auto flex items-center gap-2 truncate font-mono text-[11px]">
+                  <span className="ml-auto flex items-center gap-2 truncate tabular-nums text-[11px]">
                     {totals ? (
                       <>
                         {totals.income > 0 && <span className="text-success">+{formatWon(totals.income)}</span>}

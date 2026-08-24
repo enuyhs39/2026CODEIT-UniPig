@@ -31,7 +31,7 @@ export default async function MyPage() {
     <div className="flex flex-col gap-7">
       <h1 className="text-[17px] font-bold">마이페이지</h1>
 
-      <section className="flex flex-col gap-3 rounded-2xl border border-card-border bg-card p-4">
+      <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 shadow-sm">
         <h2 className="text-sm font-bold">별칭</h2>
         <p className="text-[12px] text-muted-foreground">
           홈 화면에 &quot;유니피그(별칭)&quot;으로 표시돼요.
@@ -69,7 +69,7 @@ export default async function MyPage() {
           {categories.map((category) => (
             <div
               key={category.id}
-              className="flex flex-col gap-2.5 rounded-2xl border border-card-border bg-card p-3.5 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-2.5 rounded-2xl bg-card p-3.5 shadow-sm sm:flex-row sm:items-center sm:justify-between"
             >
               <form action={updateLedgerCategory} className="flex flex-1 flex-wrap items-center gap-2.5">
                 <input type="hidden" name="id" value={category.id} />

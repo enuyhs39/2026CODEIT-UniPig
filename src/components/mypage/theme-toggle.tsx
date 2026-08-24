@@ -18,7 +18,7 @@ export function ThemeToggle({ initialTheme }: { initialTheme: Theme }) {
   }
 
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-card-border bg-card p-4">
+    <div className="flex items-center justify-between rounded-2xl bg-card p-4 shadow-sm">
       <div>
         <p className="text-sm font-bold">다크모드</p>
         <p className="mt-0.5 text-[12px] text-muted-foreground">화면 테마를 직접 선택해요</p>
