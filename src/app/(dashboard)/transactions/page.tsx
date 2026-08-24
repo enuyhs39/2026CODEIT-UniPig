@@ -137,12 +137,18 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
                         type="submit"
                         title={status}
                         className={cn(
-                          "h-5 w-5 rounded-md border transition-colors",
+                          "flex h-5 w-5 items-center justify-center rounded-md border transition-colors",
                           entry.isDone
                             ? "border-accent bg-accent"
                             : "border-card-border bg-background",
                         )}
-                      />
+                      >
+                        {entry.isDone && (
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="white" strokeWidth="3">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
                     </form>
                   </td>
                   <td className="whitespace-nowrap px-3 py-2.5 font-mono text-[12px] text-muted-foreground">
