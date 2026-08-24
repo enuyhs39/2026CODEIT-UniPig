@@ -5,8 +5,14 @@ import type { LedgerEntryType } from "@/generated/prisma/enums";
 
 type Category = { id: string; label: string; type: LedgerEntryType };
 
-export function EntryTypeCategoryFields({ categories }: { categories: Category[] }) {
-  const [type, setType] = useState<LedgerEntryType>("EXPENSE");
+export function EntryTypeCategoryFields({
+  categories,
+  defaultType = "EXPENSE",
+}: {
+  categories: Category[];
+  defaultType?: LedgerEntryType;
+}) {
+  const [type, setType] = useState<LedgerEntryType>(defaultType);
   const filtered = categories.filter((category) => category.type === type);
 
   return (

@@ -1,9 +1,18 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { PALETTE_BADGE_CLASSES } from "@/lib/categoryColors";
-import { EntryTypeCategoryFields } from "@/components/transactions/entry-type-category-fields";
-import { createLedgerEntry, deleteLedgerEntry, toggleLedgerEntryDone } from "./actions";
+import { AddEntryToolbar } from "@/components/transactions/add-entry-toolbar";
+import { deleteLedgerEntry, toggleLedgerEntryDone } from "./actions";
+import type { LedgerEntryType } from "@/generated/prisma/enums";
+
+const TYPE_TABS = [
+  { value: "expense", label: "지출" },
+  { value: "income", label: "수입" },
+  { value: "all", label: "전체" },
+] as const;
+type TypeTab = (typeof TYPE_TABS)[number]["value"];
 
 const STATUS_LABEL = {
   EXPENSE: { pending: "지출예상", done: "지출완료" },
@@ -28,6 +37,9 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
   const sort = params.sort === "asc" ? "asc" : "desc";
   const fromRaw = typeof params.from === "string" ? params.from : "";
   const toRaw = typeof params.to === "string" ? params.to : "";
+  const typeTab: TypeTab = params.type === "income" ? "income" : params.type === "all" ? "all" : "expense";
+  const typeFilter: LedgerEntryType | undefined =
+    typeTab === "expense" ? "EXPENSE" : typeTab === "income" ? "INCOME" : undefined;
 
   const now = new Date();
   const monthParam = Number(params.month);
@@ -42,7 +54,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
 
   const [entries, categories] = await Promise.all([
     prisma.ledgerEntry.findMany({
-      where: { userId, date: { gte: rangeStart, lt: rangeEnd } },
+      where: { userId, date: { gte: rangeStart, lt: rangeEnd }, ...(typeFilter ? { type: typeFilter } : {}) },
       orderBy: { date: sort },
       include: { category: true },
     }),
@@ -52,52 +64,53 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
     }),
   ]);
 
-  const title = hasCustomRange ? `${fromRaw} ~ ${toRaw}` : `${month}월 지출/수입 내역`;
+  const typeLabel = typeTab === "expense" ? "지출" : typeTab === "income" ? "수입" : "지출/수입";
+  const title = hasCustomRange ? `${fromRaw} ~ ${toRaw} ${typeLabel} 내역` : `${month}월 ${typeLabel} 내역`;
   const otherSort = sort === "asc" ? "desc" : "asc";
-  const sortQuery = hasCustomRange ? `from=${fromRaw}&to=${toRaw}` : `month=${month}`;
+  const baseQuery = hasCustomRange ? `from=${fromRaw}&to=${toRaw}` : `month=${month}`;
+  const sortQuery = `${baseQuery}&type=${typeTab}`;
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-[17px] font-bold">{title}</h1>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <a
-          href={`?${sortQuery}&sort=${otherSort}`}
-          className="rounded-lg border border-card-border px-3 py-1.5 text-[12px] font-semibold text-muted-foreground transition-colors hover:border-accent hover:text-accent"
-        >
-          날짜 {sort === "desc" ? "최신순 ↓" : "오래된순 ↑"}
-        </a>
-
-        <form method="GET" className="flex items-center gap-1.5">
-          <input
-            type="date"
-            name="from"
-            defaultValue={fromRaw || toDateInputValue(rangeStart)}
-            className="rounded-lg border border-card-border bg-background px-2 py-1.5 text-[12px] outline-none focus:border-accent"
-          />
-          <span className="text-[12px] text-muted-foreground">~</span>
-          <input
-            type="date"
-            name="to"
-            defaultValue={toRaw}
-            className="rounded-lg border border-card-border bg-background px-2 py-1.5 text-[12px] outline-none focus:border-accent"
-          />
-          <button
-            type="submit"
-            className="rounded-lg bg-accent px-3 py-1.5 text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
-          >
-            기간 적용
-          </button>
-          {hasCustomRange && (
-            <a
-              href={`?month=${month}`}
-              className="rounded-lg px-2 py-1.5 text-[12px] font-semibold text-muted-foreground hover:text-foreground"
-            >
-              초기화
-            </a>
-          )}
-        </form>
+      <div className="rounded-2xl bg-accent-soft px-5 py-4">
+        <h1 className="text-[19px] font-extrabold text-foreground">{title}</h1>
       </div>
+
+      <div className="flex items-center gap-1.5">
+        {TYPE_TABS.map((tab) => (
+          <Link
+            key={tab.value}
+            href={`?${baseQuery}&sort=${sort}&type=${tab.value}`}
+            className={cn(
+              "rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors",
+              typeTab === tab.value
+                ? "bg-accent text-white"
+                : "border border-card-border text-muted-foreground hover:border-accent hover:text-accent",
+            )}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
+
+      <AddEntryToolbar
+        sortLabel={`날짜 ${sort === "desc" ? "최신순 ↓" : "오래된순 ↑"}`}
+        sortHref={`?${sortQuery}&sort=${otherSort}`}
+        fromValue={fromRaw || toDateInputValue(rangeStart)}
+        toValue={toRaw}
+        hasCustomRange={hasCustomRange}
+        resetHref={`?month=${month}&type=${typeTab}`}
+        categories={categories}
+        defaultDate={toDateInputValue(now)}
+        defaultType={typeTab === "income" ? "INCOME" : "EXPENSE"}
+        typeTabValue={typeTab}
+      />
+
+      {categories.length === 0 && (
+        <p className="rounded-2xl border border-dashed border-card-border p-4 text-center text-[12.5px] text-muted-foreground">
+          아직 구분이 없어요. 마이페이지에서 구분을 먼저 만들어주세요.
+        </p>
+      )}
 
       <div className="overflow-x-auto rounded-2xl border border-card-border bg-card">
         <table className="w-full min-w-[560px] border-collapse text-[12.5px]">
@@ -179,52 +192,6 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/tra
           </tbody>
         </table>
       </div>
-
-      {categories.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-card-border p-4 text-center text-[12.5px] text-muted-foreground">
-          아직 구분이 없어요. 마이페이지에서 구분을 먼저 만들어주세요.
-        </p>
-      ) : (
-      <form
-        action={createLedgerEntry}
-        className="flex flex-col gap-2.5 rounded-2xl border border-dashed border-card-border p-4"
-      >
-        <p className="text-[12.5px] font-bold text-muted-foreground">새 항목 추가</p>
-        <div className="flex flex-wrap gap-2">
-          <EntryTypeCategoryFields categories={categories} />
-          <input
-            type="date"
-            name="date"
-            required
-            defaultValue={toDateInputValue(now)}
-            className="rounded-lg border border-card-border bg-background px-3 py-2 text-[13px] outline-none focus:border-accent"
-          />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <input
-            type="text"
-            name="description"
-            required
-            placeholder="내역"
-            className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-[13px] outline-none focus:border-accent"
-          />
-          <input
-            type="number"
-            name="amount"
-            required
-            min={1}
-            placeholder="금액"
-            className="w-32 rounded-lg border border-card-border bg-background px-3 py-2 text-[13px] outline-none focus:border-accent"
-          />
-        </div>
-        <button
-          type="submit"
-          className="self-start rounded-lg bg-accent px-3.5 py-2 text-[12.5px] font-semibold text-white transition-opacity hover:opacity-90"
-        >
-          추가
-        </button>
-      </form>
-      )}
     </div>
   );
 }
