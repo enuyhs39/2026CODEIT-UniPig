@@ -225,8 +225,16 @@ body {
   font-family: var(--font-sans), "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
 }
 
-/* 구매 시뮬레이션 히어로(타임머신) — 우주에서 천천히 떠다니는 듯한 부유 모션.
-   --float-y(수직 이동량)/--float-rot(회전각)를 요소별로 다르게 줘서 결을 다르게 만든다. */
+/* ============================================================
+   구매 시뮬레이션 하단 히어로 — "UniPig가 타임머신을 타고 화면 안을
+   실제로 날아다니는" 장면. 속도 위계: 캐릭터(가장 역동적) > 동전(중간)
+   > 시계·금융소품(느림) > 포털(거의 정지, 살아있음).
+   전부 left/top(%, 컨테이너 기준) + transform(자기중심 보정+회전+스케일)
+   조합이라 반응형으로 자연 스케일된다. 실제 이동이 없을 때(reduced-motion)
+   보이는 기본 위치는 각 요소의 인라인 style(0% 키프레임과 동일값)로 잡는다.
+   ============================================================ */
+
+/* 약한 bobbing 오버레이(경로 이동과 별개, 캐릭터/시계에 중첩) */
 @keyframes unipig-float {
   0%,
   100% {
@@ -244,5 +252,234 @@ body {
   .unipig-float {
     animation: unipig-float var(--float-duration, 4s) ease-in-out infinite;
     animation-delay: var(--float-delay, 0s);
+  }
+}
+
+/* 메인 타임머신 — 왼쪽아래(포털) → 중앙 → 오른쪽위 → 오른쪽아래 → 복귀,
+   방향에 따라 ±3~6도 기울고 0.95~1.05 스케일로 원근감을 준다.
+   각 좌표는 중심(50%)에서의 편차 * --flight-range로 계산해서, 모바일에서
+   --flight-range만 줄이면 캐릭터가 잘리지 않도록 경로 자체가 좁아진다. */
+.unipig-flight {
+  --flight-range: 1;
+}
+
+@media (max-width: 639.98px) {
+  .unipig-flight {
+    --flight-range: 0.6;
+  }
+}
+
+@keyframes unipig-flight {
+  0% {
+    left: calc(50% + var(--flight-range) * -38%);
+    top: calc(50% + var(--flight-range) * 24%);
+    transform: translate(-50%, -50%) rotate(-3deg) scale(1.02);
+  }
+  12% {
+    left: calc(50% + var(--flight-range) * -28%);
+    top: calc(50% + var(--flight-range) * 12%);
+    transform: translate(-50%, -50%) rotate(3deg) scale(1);
+  }
+  25% {
+    left: calc(50% + var(--flight-range) * -13%);
+    top: calc(50% + var(--flight-range) * -3%);
+    transform: translate(-50%, -50%) rotate(5deg) scale(0.99);
+  }
+  38% {
+    left: calc(50% + var(--flight-range) * 4%);
+    top: calc(50% + var(--flight-range) * -18%);
+    transform: translate(-50%, -50%) rotate(6deg) scale(0.97);
+  }
+  50% {
+    left: calc(50% + var(--flight-range) * 18%);
+    top: calc(50% + var(--flight-range) * -28%);
+    transform: translate(-50%, -50%) rotate(3deg) scale(0.95);
+  }
+  62% {
+    left: calc(50% + var(--flight-range) * 28%);
+    top: calc(50% + var(--flight-range) * -18%);
+    transform: translate(-50%, -50%) rotate(-1deg) scale(0.97);
+  }
+  75% {
+    left: calc(50% + var(--flight-range) * 30%);
+    top: calc(50% + var(--flight-range) * 4%);
+    transform: translate(-50%, -50%) rotate(-4deg) scale(1);
+  }
+  88% {
+    left: calc(50% + var(--flight-range) * 10%);
+    top: calc(50% + var(--flight-range) * 18%);
+    transform: translate(-50%, -50%) rotate(-5deg) scale(1.03);
+  }
+  100% {
+    left: calc(50% + var(--flight-range) * -38%);
+    top: calc(50% + var(--flight-range) * 24%);
+    transform: translate(-50%, -50%) rotate(-3deg) scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .unipig-flight {
+    animation: unipig-flight 14s ease-in-out infinite;
+  }
+}
+
+/* 시간 포털 — 출발점에 고정, 아주 느린 회전/스케일/opacity 변화만 (UniPig보다 절대 안 튀게) */
+@keyframes unipig-portal-pulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 0.42;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.045) rotate(3deg);
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .unipig-portal-pulse {
+    animation: unipig-portal-pulse 11s ease-in-out infinite;
+  }
+}
+
+/* 동전 — 서로 다른 작은 궤도(하나는 시계방향, 하나는 반시계방향)로 독립적으로 공전 */
+@keyframes unipig-orbit-a {
+  0% {
+    left: 22%;
+    top: 66%;
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  25% {
+    left: 32%;
+    top: 56%;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+  50% {
+    left: 26%;
+    top: 44%;
+    transform: translate(-50%, -50%) rotate(180deg);
+  }
+  75% {
+    left: 15%;
+    top: 53%;
+    transform: translate(-50%, -50%) rotate(270deg);
+  }
+  100% {
+    left: 22%;
+    top: 66%;
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes unipig-orbit-b {
+  0% {
+    left: 72%;
+    top: 34%;
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  25% {
+    left: 62%;
+    top: 24%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+  }
+  50% {
+    left: 68%;
+    top: 14%;
+    transform: translate(-50%, -50%) rotate(-180deg);
+  }
+  75% {
+    left: 80%;
+    top: 21%;
+    transform: translate(-50%, -50%) rotate(-270deg);
+  }
+  100% {
+    left: 72%;
+    top: 34%;
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .unipig-orbit-a {
+    animation: unipig-orbit-a 9s ease-in-out infinite;
+  }
+  .unipig-orbit-b {
+    animation: unipig-orbit-b 11.5s ease-in-out infinite;
+    animation-delay: -3.5s;
+  }
+}
+
+/* 파란 시계 — 오른쪽 위 ↔ 중앙을 아주 느리게 왕복, UniPig보다 훨씬 느림 */
+@keyframes unipig-clock-drift {
+  0%,
+  100% {
+    left: 80%;
+    top: 15%;
+    transform: translate(-50%, -50%) rotate(-4deg);
+  }
+  50% {
+    left: 54%;
+    top: 26%;
+    transform: translate(-50%, -50%) rotate(4deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .unipig-clock-drift {
+    animation: unipig-clock-drift 22s ease-in-out infinite;
+  }
+}
+
+/* 금융 소품(카드/영수증 중 하나) — 배경에서 아주 느리게 드리프트, 가장자리에서 서서히 나타났다 사라짐 */
+@keyframes unipig-card-drift {
+  0% {
+    left: 6%;
+    top: 60%;
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-6deg);
+  }
+  12% {
+    opacity: 0.2;
+  }
+  50% {
+    left: 52%;
+    top: 46%;
+    opacity: 0.22;
+    transform: translate(-50%, -50%) rotate(2deg);
+  }
+  88% {
+    opacity: 0.2;
+  }
+  100% {
+    left: 90%;
+    top: 58%;
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(8deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .unipig-card-drift {
+    animation: unipig-card-drift 26s ease-in-out infinite;
+  }
+}
+
+/* 반짝임 — 작은 개별 요소(별)를 캐릭터 경로 근처에서 잠깐씩 트윙클 */
+@keyframes unipig-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .unipig-twinkle {
+    animation: unipig-twinkle var(--twinkle-duration, 3.5s) ease-in-out infinite;
+    animation-delay: var(--twinkle-delay, 0s);
   }
 }
