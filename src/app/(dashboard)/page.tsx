@@ -12,13 +12,13 @@ const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 const GROUP_ORDER: AiExpenseGroup[] = ["FOOD", "CAFE", "SHOPPING", "TRANSPORT", "OTHER"];
 
-/** 지출 구성 바/범례 색상 — 마이페이지 배지와 같은 톤 팔레트(tag-*) 재사용. */
-const GROUP_COLOR_CLASS: Record<AiExpenseGroup, string> = {
-  FOOD: "bg-tag-red-text",
-  CAFE: "bg-tag-brown-text",
-  SHOPPING: "bg-tag-yellow-text",
-  TRANSPORT: "bg-tag-blue-text",
-  OTHER: "bg-tag-gray-text",
+/** 지출 구성 바/범례 색상 — 마이페이지 구분 색상(tag-*)과는 별개로, 사이트 메인 팔레트(네이비/코발트/골드)에서 파생한 전용 톤. */
+const GROUP_COLOR_VAR: Record<AiExpenseGroup, string> = {
+  FOOD: "var(--chart-food)",
+  CAFE: "var(--chart-cafe)",
+  SHOPPING: "var(--chart-shopping)",
+  TRANSPORT: "var(--chart-transport)",
+  OTHER: "var(--chart-other)",
 };
 
 type MonthTotal = { income: number; expense: number };
@@ -113,15 +113,14 @@ export default async function HomePage() {
             {categoryBreakdown.map((c) => (
               <div
                 key={c.group}
-                className={GROUP_COLOR_CLASS[c.group]}
-                style={{ width: `${(c.amount / categoryTotal) * 100}%` }}
+                style={{ width: `${(c.amount / categoryTotal) * 100}%`, backgroundColor: GROUP_COLOR_VAR[c.group] }}
               />
             ))}
           </div>
           <div className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5">
             {categoryBreakdown.map((c) => (
               <span key={c.group} className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-                <span className={cn("h-1.5 w-1.5 rounded-full", GROUP_COLOR_CLASS[c.group])} />
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: GROUP_COLOR_VAR[c.group] }} />
                 {EXPENSE_GROUP_LABEL[c.group]} {Math.round((c.amount / categoryTotal) * 100)}%
               </span>
             ))}

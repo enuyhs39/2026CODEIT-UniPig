@@ -40,6 +40,13 @@
   --color-cobalt: #7da7d9;
   --color-butter: #fff7cc;
   --color-ice: #dceeff;
+
+  /* 홈 화면 지출 구성 차트 전용 — 메인 팔레트(네이비/코발트/버터)에서 파생 */
+  --chart-food: #304860;
+  --chart-cafe: #8a6d1d;
+  --chart-shopping: #4f7396;
+  --chart-transport: #7da7d9;
+  --chart-other: #a9c3dc;
 }
 
 @theme inline {
@@ -118,6 +125,12 @@
     --tag-pink-text: #ee7ec2;
     --tag-red-bg: #3a1e1c;
     --tag-red-text: #f16b60;
+
+    --chart-food: #e5edf7;
+    --chart-cafe: #f0d876;
+    --chart-shopping: #a9c3dc;
+    --chart-transport: #8fbbe6;
+    --chart-other: #5b7fa3;
   }
 }
 
@@ -156,6 +169,12 @@
   --tag-pink-text: #ee7ec2;
   --tag-red-bg: #3a1e1c;
   --tag-red-text: #f16b60;
+
+  --chart-food: #e5edf7;
+  --chart-cafe: #f0d876;
+  --chart-shopping: #a9c3dc;
+  --chart-transport: #8fbbe6;
+  --chart-other: #5b7fa3;
 }
 
 :root[data-theme="light"] {
@@ -192,6 +211,12 @@
   --tag-pink-text: #d6469e;
   --tag-red-bg: #fde1df;
   --tag-red-text: #dd463c;
+
+  --chart-food: #304860;
+  --chart-cafe: #8a6d1d;
+  --chart-shopping: #4f7396;
+  --chart-transport: #7da7d9;
+  --chart-other: #a9c3dc;
 }
 
 body {
