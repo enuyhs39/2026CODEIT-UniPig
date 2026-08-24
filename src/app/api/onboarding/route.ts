@@ -48,19 +48,23 @@ export async function POST(request: Request) {
   }
 
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.fixedExpense.createMany({
-        data: (Object.entries(fixedExpenses) as [FixedExpenseCategory, number][]).map(([category, amount]) => ({
-          userId,
-          category,
-          amount,
-        })),
-      });
-      await tx.userPreference.create({
-        data: { userId, weights: DEFAULT_BUDGET_WEIGHTS, savingRate },
-      });
-      await ingestTransactionsForUser(tx, userId, csv);
-    });
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.fixedExpense.createMany({
+          data: (Object.entries(fixedExpenses) as [FixedExpenseCategory, number][]).map(([category, amount]) => ({
+            userId,
+            category,
+            amount,
+          })),
+        });
+        await tx.userPreference.create({
+          data: { userId, weights: DEFAULT_BUDGET_WEIGHTS, savingRate },
+        });
+        await ingestTransactionsForUser(tx, userId, csv);
+      },
+      // 기본값(연결 대기 2초/실행 5초)은 원격 pooler + 12개월치 CSV(수백 건) 앞에서 너무 빡빡해서 늘려둔다.
+      { maxWait: 15_000, timeout: 60_000 },
+    );
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 400 });
   }
