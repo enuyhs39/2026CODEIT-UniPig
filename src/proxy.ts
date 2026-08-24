@@ -41,7 +41,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
   if (isAuthPage && user) {
-    return NextResponse.redirect(new URL("/budget", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return response;

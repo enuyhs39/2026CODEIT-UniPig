@@ -31,5 +31,5 @@ export async function login(_state: LoginFormState, formData: FormData): Promise
     return { error: "아이디 또는 비밀번호가 올바르지 않아요" };
   }
 
-  redirect("/budget");
+  redirect("/");
 }

@@ -8,7 +8,6 @@ import { OVERDUE_ALERT_CATEGORIES, type ExpenseCategory } from "@/config";
 import { loadIncomeTransactionsAndRules, loadTerminatedSourceIds } from "@/lib/incomeData";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
-import { logout } from "@/lib/authActions";
 import { SourceStatusBadge } from "@/components/SourceStatusBadge";
 import { BudgetPlanner, type ConfirmedProgress } from "@/components/BudgetPlanner";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
@@ -35,23 +34,8 @@ export default async function Home() {
   const preference = await prisma.userPreference.findUnique({ where: { userId } });
 
   return (
-    <div className="flex flex-col flex-1">
-      <header className="flex items-center justify-between bg-navy px-6 py-5 text-white">
-        <h1 className="text-lg font-extrabold">UniPig</h1>
-        <form action={logout}>
-          <button type="submit" className="text-sm font-medium text-white/70">
-            로그아웃
-          </button>
-        </form>
-      </header>
-
-      <main className="flex-1 bg-ice px-6 py-8">
-        {!preference ? (
-          <OnboardingWizard />
-        ) : (
-          <BudgetContent userId={userId} />
-        )}
-      </main>
+    <div className="flex flex-1 flex-col bg-ice px-6 py-8">
+      {!preference ? <OnboardingWizard /> : <BudgetContent userId={userId} />}
     </div>
   );
 }
