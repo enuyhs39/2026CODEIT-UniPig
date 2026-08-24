@@ -6,16 +6,35 @@ import Image from "next/image";
  */
 export function TimeMachineHero() {
   return (
-    <div className="relative flex h-[190px] items-center justify-center overflow-hidden sm:h-[240px]">
-      {/* 은은한 파란빛 궤적 — 블러 대신 완전히 투명해지는 radial-gradient라 경계가 안 보임 */}
-      <div
-        aria-hidden
-        className="absolute inset-0"
-        style={{
-          background: "radial-gradient(ellipse 55% 60% at 50% 50%, var(--accent) 0%, transparent 70%)",
-          opacity: 0.22,
-        }}
-      />
+    <div className="relative flex h-[190px] items-center justify-center sm:h-[240px]">
+      {/* 은은한 파란빛 궤적 — 컨테이너가 가로로 매우 넓어서(%) 기준 타원을 쓰면 위아래가
+          컨테이너 높이에 눌려 잘린 것처럼 보였고, 가장 큰 원(300px)이 overflow-hidden 컨테이너(240px)
+          보다 커서 위아래가 실제로 잘리기도 했음. overflow-hidden을 빼고 크기도 여유 있게 줄여서
+          어떤 화면 비율에서도 안 잘리게 함. 컨테이너 비율과 무관하게 항상 동그랗도록 고정 픽셀
+          지름의 원(circle)을 캐릭터 중심에 겹쳐서 자연광처럼 퍼지게 함 */}
+      <div aria-hidden className="absolute inset-0">
+        <div
+          className="absolute left-1/2 top-1/2 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full sm:h-[260px] sm:w-[260px]"
+          style={{
+            background: "radial-gradient(circle, var(--accent) 0%, transparent 100%)",
+            opacity: 0.07,
+          }}
+        />
+        <div
+          className="absolute left-1/2 top-1/2 h-[140px] w-[140px] -translate-x-1/2 -translate-y-1/2 rounded-full sm:h-[185px] sm:w-[185px]"
+          style={{
+            background: "radial-gradient(circle, var(--accent) 0%, transparent 100%)",
+            opacity: 0.1,
+          }}
+        />
+        <div
+          className="absolute left-1/2 top-1/2 h-[90px] w-[90px] -translate-x-1/2 -translate-y-1/2 rounded-full sm:h-[125px] sm:w-[125px]"
+          style={{
+            background: "radial-gradient(circle, var(--accent) 0%, transparent 100%)",
+            opacity: 0.15,
+          }}
+        />
+      </div>
 
       <div className="relative h-full w-full max-w-[360px]">
         {/* 메인 타임머신 */}
