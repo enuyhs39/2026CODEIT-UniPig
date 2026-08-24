@@ -5,7 +5,7 @@ import type { ExpenseCategory } from "@/config";
 import { simulatePurchase, type SimulateBudgetProgress } from "@/core/simulatePurchase";
 import { formatWon } from "@/lib/format";
 
-const CATEGORIES: ExpenseCategory[] = ["식비", "카페", "쇼핑", "교통", "기타"];
+const CATEGORIES: ExpenseCategory[] = ["식비", "쇼핑", "문화/여가", "교육/자기계발", "생필품/경조사", "기타"];
 
 export function PurchaseSimulator({ progress }: { progress: SimulateBudgetProgress }) {
   const [category, setCategory] = useState<ExpenseCategory>("식비");

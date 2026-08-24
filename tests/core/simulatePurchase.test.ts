@@ -3,8 +3,8 @@ import { simulatePurchase, type SimulateBudgetProgress } from "@/core/simulatePu
 
 function baseProgress(overrides: Partial<SimulateBudgetProgress> = {}): SimulateBudgetProgress {
   return {
-    allocations: { 식비: 300_000, 카페: 100_000, 쇼핑: 100_000, 교통: 50_000, 기타: 50_000 },
-    spentByCategory: { 식비: 200_000, 카페: 50_000, 쇼핑: 0, 교통: 0, 기타: 0 },
+    allocations: { 식비: 300_000, 쇼핑: 100_000, "문화/여가": 100_000, "교육/자기계발": 50_000, "생필품/경조사": 50_000, 기타: 50_000 },
+    spentByCategory: { 식비: 200_000, 쇼핑: 50_000, "문화/여가": 0, "교육/자기계발": 0, "생필품/경조사": 0, 기타: 0 },
     ...overrides,
   };
 }
@@ -34,7 +34,7 @@ describe("simulatePurchase", () => {
   });
 
   it("정확히 예산과 같으면 초과가 아니다(경계값)", () => {
-    const result = simulatePurchase(baseProgress(), "교통", 50_000);
+    const result = simulatePurchase(baseProgress(), "생필품/경조사", 50_000);
     expect(result.remainingAfter).toBe(0);
     expect(result.overBudget).toBe(false);
   });
