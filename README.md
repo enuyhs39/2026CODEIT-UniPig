@@ -1,36 +1,21 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UniPig(유니피그)
+대학생을 위한 맞춤형 가계부
 
-## Getting Started
+## 핵심 기능
+1. **유니피그(메인 화면)** : 이번달 수입/지출/순잔액, 카테고리별 지출 구성 비율, 연간 지출 기록
+2. **수입/지출**: 사용자의 거래 내역 관리
+    - 카테고리를 직접 설정 (이름, 색상, 분류)
+    - 예정된 소비 미리 기입
+3. **저금통**: 적금/주식/파킹 등을 위한 저축 관리, 목표 금액 기반 달성률 시각화
+4. **수입 예측 기반 예산 추천**: 지난 12개월 거래 내역으로 이번 달 예상 수입 범위를 예측하고, 이를 기반으로 카테고리별 예산안 추천 + 소득원 종료·입금 지연 여부 확인
+5. **구매 시뮬레이션**: 구매하고자 하는 물건의 카테고리와 금액을 입력하면, 확정된 이번 달 예산 기준으로 구매 후 남는 금액을 바로 계산
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 기술 스택
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js
+ ├─ 프론트엔드  = React + TypeScript + Recharts
+ └─ 백엔드/DB  = Prisma ORM + Supabase (PostgreSQL)
+        │
+        ▼
+   배포 = Vercel
+```
